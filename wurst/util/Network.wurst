@@ -14,7 +14,7 @@ import MoriUtil
 @configurable constant integer MAX_CHARACTERS_PER_KEY = 3
 // setting this to false will optimize out all safety checks...
 // only disable this if you are 100% sure your code works correctly
-@configurable constant boolean SAFETY_CHECKS_ENABLED = false
+@configurable constant boolean SAFETY_CHECKS_ENABLED = true
 
 /********************************************************************************
 	Network library v1.0 by MoriMori.
@@ -648,18 +648,18 @@ public class Network
 	// sends info about the amount of data to be expected to each player
 	private function sendMetadata()
 		// we should only send the metadata once
-		if currentState != NetworkState.PREPARING
+		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.PREPARING
 			error("Network: trying to send duplicate metadata")
 
 		currentState = NetworkState.SENDING_META
 		let synchronizer = new SimpleSynchronizer
 
+		// explode the strings in the data buffer into an int stream
+		dataStream.explodeStrings()
+
 		// lock the data stream so that no players can read or write to it while
 		// the transmission hasn't finished
 		dataStream.setMode(StreamMode.LOCKED)
-
-		// explode the strings in the data buffer into an int stream
-		dataStream.explodeStrings()
 
 		// get the amount of individual entities to be synced for each type
 		let integerCount    = dataStream.getIntegerCount()
@@ -701,13 +701,14 @@ public class Network
 	// receives info about the transmission after it has been sent by the originating player
 	private function receiveMetadata()
 		// check that we are transitioning from the correct state
-		if currentState != NetworkState.SENDING_META
+		if SAFETY_CHECKS_ENABLED and  currentState != NetworkState.SENDING_META
 			error("Network: trying to receive metadata at a wrong time")
 		
 		// check that we have received all metadata just in case (should never error, though)
-		for i = 0 to META_COUNT - 1
-			if not metaCache.hasInteger(mkey, getKey(i))
-				error("Network: missing metadata, key " + i.toString())
+		if SAFETY_CHECKS_ENABLED
+			for i = 0 to META_COUNT - 1
+				if not metaCache.hasInteger(mkey, getKey(i))
+					error("Network: missing metadata, key " + i.toString())
 
 		// save the metadata
 		integerCount = metaCache.loadInteger(mkey, META_INTEGER_KEY)
@@ -805,7 +806,7 @@ public class Network
 			end)
 
 	private function sendRound()
-		if currentState != NetworkState.SENDING_ROUND
+		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
 			error("Network: trying to send round at the wrong time")
 
 		let synchronizer = new SimpleSynchronizer()
@@ -846,7 +847,7 @@ public class Network
 		synchronizer.onSynced(() -> receiveRound())
 
 	private function receiveRound()
-		if currentState != NetworkState.SENDING_ROUND
+		if SAFETY_CHECKS_ENABLED and currentState != NetworkState.SENDING_ROUND
 			error("Network: trying to receive round at the wrong time")
 
 		// receive for all non-senders, since sender already has the data
