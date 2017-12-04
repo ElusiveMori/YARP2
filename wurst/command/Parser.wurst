@@ -1,0 +1,137 @@
+package Parser
+
+/**
+	Base class for command parsers.
+**/
+public abstract class BaseParser
+	string input
+	integer pos
+
+	construct(string input, integer pos)
+		this.input = input
+		this.pos = pos
+	
+	abstract function next() returns string
+
+	function isFinished() returns boolean
+		return pos >= input.length()
+
+	function restSimple() returns string
+		integer temp = pos
+		pos = input.length()
+		
+
+		return input.substring(temp, pos)
+
+	function restParsed() returns string
+		string result = ""
+
+		while not isFinished()
+			result += next()
+
+			if not isFinished()
+				result += " "
+		
+		return result
+
+/**
+
+**/
+public class CommandParser extends BaseParser
+	construct(string input, integer pos)
+		super(input, pos)
+
+	override function next() returns string
+		integer depth = 0
+		boolean forceSkip = false
+		string arg = ""
+
+		while pos < input.length()
+			string char = input.charAt(pos)
+
+			if forceSkip
+				forceSkip = false
+				pos++
+			else if char == "\\"
+				arg += input.charAt(pos + 1)
+				forceSkip = true
+				pos++
+			else if char == "]" and depth > 0
+				pos++
+				depth--
+				arg += char
+			else if char == "["
+				pos++
+				depth++
+				arg += char
+			else if char == "|" and depth == 0
+				pos++
+				return arg
+			else
+				pos++
+				arg += char
+
+		return arg
+
+public class ArgumentParser extends BaseParser
+	construct(string input, integer pos)
+		super(input, pos)
+
+	override function next() returns string
+		integer depth = 0
+		boolean forceSkip = false
+		string arg = ""
+
+		while pos < input.length()
+			string char = input.charAt(pos)
+
+			if forceSkip
+				forceSkip = false
+				pos++
+			else if char == "\\"
+				arg += input.charAt(pos + 1)
+				forceSkip = true
+				pos++
+			else if char == "]" and depth > 0
+				pos++
+				depth--
+
+				if depth == 0
+					return arg
+				else
+					arg += char
+			else if char == "["
+				if depth == 0 and arg != ""
+					return arg
+
+				if depth > 0
+					arg = arg + char
+
+				pos++
+				depth++
+			else if char == " " and depth == 0
+				pos++
+
+				if arg.length() > 0
+					return arg
+			else
+				pos++
+				arg += char
+
+		return arg
+	
+public class WhitespaceParser extends BaseParser
+	construct(string input, integer pos)
+		super(input, pos)
+
+	override function next() returns string
+		integer start = pos
+		
+		while pos < input.length()
+			if input.charAt(pos - 1) == " "
+				pos++
+				return input.substring(start, pos - 1)
+			else
+				pos++
+		
+		return input.substring(start, pos)

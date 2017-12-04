@@ -1,0 +1,40 @@
+package Command
+
+import LinkedList
+import HashMap
+import Parser
+import MapBounds
+
+interface CommandCallback
+	function execute(CommandThread thread)
+
+/**
+	Represents a single command to be executed
+	within a command thread context.
+**/
+public class Command
+	private string command
+	private static HashMap<string, CommandCallback> commands
+
+	construct(string command)
+		this.command = command
+
+	function execute(CommandThread thread)
+
+	static function register(string command, CommandCallback callback)
+		
+
+/**
+	Represents a single command "execution thread", 
+	typically created in response to each player command
+	and holding various thread context data.
+**/
+class CommandThread
+	LinkedList<Command> commandQueue
+
+/**
+	Represents a single player running various commands.
+**/
+class CommandExecutor
+	player owner
+	LinkedList<CommandThread> runningThreads	

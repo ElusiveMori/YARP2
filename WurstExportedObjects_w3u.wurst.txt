@@ -1,0 +1,37 @@
+package WurstExportedObjects_w3u
+import ObjEditingNatives
+
+//modifiedTable: 
+
+@compiletime function create_w3u_xdum()
+	let u = createObjectDefinition("w3u", 'xdum', 'ewsp')
+	u.setInt("wurs", 42)
+	u.setString("unam", "Effect Dummy Unit")
+	u.setString("upgr", "")
+	u.setString("ubui", "")
+	u.setUnreal("umpr", 0.1)
+	u.setInt("umpi", 1000)
+	u.setInt("umpm", 1000)
+	u.setUnreal("ucol", 0.0)
+	u.setString("urac", "commoner")
+	u.setInt("ufoo", 0)
+	u.setString("udty", "divine")
+	u.setString("uico", "ReplaceableTextures\\CommandButtons\\BTNtemp.blp")
+	u.setInt("umvs", 522)
+	u.setString("umdl", "dummy.mdl")
+	u.setReal("uble", 0.0)
+	u.setUnreal("ucbs", 0.0)
+	u.setReal("umxp", 0.0)
+	u.setReal("umxr", 0.0)
+	u.setString("uspa", "")
+	u.setUnreal("uimz", 0.0)
+	u.setUnreal("ulpz", 0.0)
+	u.setString("unsf", "(Basics)")
+	u.setInt("usid", 1)
+	u.setInt("usin", 1)
+	u.setString("utyp", "_")
+	u.setUnreal("uprw", 1.0)
+	u.setString("utip", "")
+	u.setString("uabi", "Avul,Aloc")
+
+

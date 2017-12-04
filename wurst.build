@@ -1,0 +1,5 @@
+projectName: YARP2
+dependencies: ['https://github.com/SamuelMoriarty/WurstStdlib2']
+buildMapName: DefaultName
+buildMapFileName: DefaultFileName
+buildMapAuthor: DefaultAuthor
