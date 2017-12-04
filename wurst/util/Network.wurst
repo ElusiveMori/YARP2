@@ -270,16 +270,17 @@ public class DataStream
 	private integer realWriteIndex    = -1
 	private integer booleanWriteIndex = -1
 	private integer stringWriteIndex  = -1
+	private integer stringIntWriteIndex = -1
 
 	private integer integerReadIndex = -1
 	private integer realReadIndex    = -1
 	private integer booleanReadIndex = -1
 	private integer stringReadIndex  = -1
+	private integer stringIntReadIndex = -1
 
 	private integer compactIndex = -1
 	private integer explodeIndex = -1
 
-	private integer stringIntReadIndex = -1
 
 	construct()
 		currentMode = WRITING
@@ -312,31 +313,39 @@ public class DataStream
 		stringWriteIndex++
 		buffer.saveString(stringWriteIndex, value)
 
+	protected function writeStringInt(integer value)
+		if SAFETY_CHECKS_ENABLED
+			checkMode(StreamMode.WRITING)
+		stringIntWriteIndex++
+		stringBuffer.saveInt(stringIntWriteIndex, value)
+
 	// this function 'explodes' all stored strings into a sequence
 	// of ints stored in stringBuffer, so that we can send it as another
 	// integer stream without hassle
 	protected function explodeStrings()
-		for i = 0 to stringWriteIndex
-			let value = buffer.loadString(i)
+		execute(() -> begin
+			for i = 0 to stringWriteIndex
+				let value = buffer.loadString(i)
 
-			// prevent OP limit overrun by running this in separate thread
-			execute(() -> begin
-				explodeIndex++
-				stringBuffer.saveInt(explodeIndex, value.length())
-				// wrap loop counter in a box to allow modifying it from inside the closure
-				var j = new Box<integer>(0)
-				while j.value < value.length()
-					// split writes into sequences of no longer than CHARS_PER_COMPACT
-					execute(() -> begin
-						var count = 0
-						while j.value < value.length() and count < CHARS_PER_COMPACT
-							explodeIndex++
-							stringBuffer.saveInt(explodeIndex, getIndexFromChar(value.charAt(j.value)))
-							j.value++
-							count++
-					end)
-				destroy j
-			end)
+				// prevent OP limit overrun by running this in separate thread
+				execute(() -> begin
+					explodeIndex++
+					stringBuffer.saveInt(explodeIndex, value.length())
+					// wrap loop counter in a box to allow modifying it from inside the closure
+					var j = new Box<integer>(0)
+					while j.value < value.length()
+						// split writes into sequences of no longer than CHARS_PER_COMPACT
+						execute(() -> begin
+							var count = 0
+							while j.value < value.length() and count < CHARS_PER_COMPACT
+								explodeIndex++
+								stringBuffer.saveInt(explodeIndex, getIndexFromChar(value.charAt(j.value)))
+								j.value++
+								count++
+						end)
+					destroy j
+				end)
+		end)
 
 	function writeBoolean(boolean value)
 		if SAFETY_CHECKS_ENABLED
@@ -370,34 +379,38 @@ public class DataStream
 	protected function readStringInt() returns integer
 		if SAFETY_CHECKS_ENABLED
 			checkMode(StreamMode.READING)
+		stringIntReadIndex++
+		return stringBuffer.loadInt(stringIntReadIndex)
 
 	// this function 'compacts' the 'exploded' int stream in stringBuffer
-	// back into actual strings stored in the buffer
+	// back into actual strings stored in the main buffer
 	protected function compactStrings()
-		while true
-			compactIndex++
-			let length = stringBuffer.loadInt(compactIndex)
+		execute(() -> begin
+			while true
+				compactIndex++
+				let length = stringBuffer.loadInt(compactIndex)
 
-			if length > 0
-				execute(() -> begin
-					var temp = new BoxString("")
-					var i = new Box<integer>(0)
-					while i.value < length
-						execute(() -> begin
-							var count = 0
-							while i.value < length and count < CHARS_PER_COMPACT
-								compactIndex++
-								temp.value += getCharFromIndex(stringBuffer.loadInt(compactIndex))
-								count++
-								i.value++
-						end)
-					
-					writeString(temp.value)
-					destroy temp
-					destroy i
-				end)
-			else
-				break
+				if length > 0
+					execute(() -> begin
+						var temp = new BoxString("")
+						var i = new Box<integer>(0)
+						while i.value < length
+							execute(() -> begin
+								var count = 0
+								while i.value < length and count < CHARS_PER_COMPACT
+									compactIndex++
+									temp.value += getCharFromIndex(stringBuffer.loadInt(compactIndex))
+									count++
+									i.value++
+							end)
+						
+						writeString(temp.value)
+						destroy temp
+						destroy i
+					end)
+				else
+					break
+		end)
 
 	function readBoolean() returns boolean
 		if SAFETY_CHECKS_ENABLED
@@ -611,13 +624,6 @@ public class Network
 	private integer currentStringInt  = 0
 	private integer currentRound   = 0
 
-	// // string wrap-around for writing into rounds
-	// private string writeRemnant = null
-
-	// // string wrap-around for reading from rounds
-	// private string readPartial = null
-	// private integer readPartialSize = 0
-
 	// finish callback
 	private NetworkFinishedCallback finishCallback
 
@@ -651,6 +657,9 @@ public class Network
 		// lock the data stream so that no players can read or write to it while
 		// the transmission hasn't finished
 		dataStream.setMode(StreamMode.LOCKED)
+
+		// explode the strings in the data buffer into an int stream
+		dataStream.explodeStrings()
 
 		// get the amount of individual entities to be synced for each type
 		let integerCount    = dataStream.getIntegerCount()
@@ -776,80 +785,24 @@ public class Network
 			end)
 
 	private function writeStrings()
-		while currentStringInt < stringIntCount and gcStringStream.getRemainingRead() > 0
+		while currentStringInt < stringIntCount and gcStringStream.getRemainingWrite() > 0
 			execute(() -> begin
 				var i = 0
-				while currentStringInt < stringIntCount and gcStringStream.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
-					gcStringStream.writeInteger(dataStream)
+				while currentStringInt < stringIntCount and gcStringStream.getRemainingWrite() > 0 and i < DATA_PER_EXECUTE
+					gcStringStream.writeInteger(dataStream.readStringInt())
 					currentStringInt++
 					i++
 			end)
 
-	// // read/write combo for strings, since SyncStoredString does not work
-	// // so we send strings as integer streams with a size field before them
-	// private function writeString()
-	// 	string value
-		
-	// 	if writeRemnant != null
-	// 		// if there is a left-over from a previous sync, we need to write it first
-	// 		value = writeRemnant
-	// 		writeRemnant = null
-	// 	else
-	// 		// if there are no left-overs from a previous sync, write the string length first
-	// 		value = dataStream.readString()
-	// 		gcStringStream.writeInteger(value.length())
-
-	// 	var pos = 0
-	// 	while gcStringStream.getRemainingWrite() > 0 and pos < value.length()
-	// 		gcStringStream.writeInteger(getIndexFromChar(value.charAt(pos)))
-	// 		pos++
-
-	// 	if pos < value.length()
-	// 		// if we couldn't send the whole string, send it with next sync round			
-	// 		writeRemnant = value.substring(pos)
-	// 	else
-	// 		// otherwise we have sent the string
-	// 		stringIntCount++
-
-	// private function readString()
-	// 	string value
-	// 	integer readCount
-
-	// 	if readPartial != null
-	// 		// if we have an unfinished string from a previous round, we need to read it instead
-	// 		value = readPartial
-	// 		readCount = readPartialSize - readPartial.length()
-	// 	else
-	// 		// otherwise, we need to read a new string
-	// 		value = ""
-	// 		readCount = gcStringStream.readInteger()
-		
-	// 	// read the required amount
-	// 	integer i = 0
-	// 	while i < readCount and gcStringStream.getRemainingRead() > 0
-	// 		value += getCharFromIndex(gcStringStream.readInteger())
-
-	// 	if i < readCount
-	// 		// if we haven't read the whole string, delay it until next round is received
-	// 		readPartialSize = readCount
-	// 		readPartial = value
-	// 	else
-	// 		// otherwise, we have read the whole string and we can save it
-	// 		dataStream.writeString(value)
-	// 		readPartial = null
-	// 		stringIntCount++
-
-	// private function writeStrings()
-	// 	// keep writing strings as long as there is space in the gamecache and we have strings to write
-	// 	while gcStringStream.getRemainingWrite() > 0 and currentStringInt < stringIntCount
-	// 		// writing a string is potentially expensive so insert an op resetter
-	// 		execute(() -> writeString())
-
-	// private function readStrings()
-	// 	// keep reading strings as long as there is any data left in the gamecache and we have strings to read
-	// 	while gcStringStream.getRemainingRead() > 0 and currentStringInt < stringIntCount
-	// 		// reading a string is potentiall expensive so insert an op resetter
-	// 		execute(() -> readString())
+	private function readStrings()
+		while currentStringInt < stringIntCount and gcStringStream.getRemainingRead() > 0
+			execute(() -> begin
+				var i = 0
+				while currentStringInt < stringIntCount and gcStringStream.getRemainingRead() > 0 and i < DATA_PER_EXECUTE
+					dataStream.writeStringInt(gcStringStream.readInteger())
+					currentStringInt++
+					i++
+			end)
 
 	private function sendRound()
 		if currentState != NetworkState.SENDING_ROUND
@@ -917,6 +870,8 @@ public class Network
 			execute(() -> sendRound())
 		else
 			// if this is the last round, finalize and call the callback
+			if localPlayer != sender
+				dataStream.compactStrings()
 			dataStream.setMode(StreamMode.READING)
 			dataStream.resetRead()
 			currentState = NetworkState.FINISHED

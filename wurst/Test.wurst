@@ -27,14 +27,6 @@ function testWrite()
 	
 	destroy writer
 
-tuple tupleTest(integer a, integer b)
-
-function tupleTest.incrementA() returns tupleTest
-	return tupleTest(this.a + 1, this.b)
-
-function tupleTest.getA() returns integer
-	return this.a
-
 class Box<T>
 	T value
 
@@ -81,11 +73,5 @@ init
 	CreateTrigger()
 	..registerAnyPlayerEvent(EVENT_PLAYER_ARROW_UP_DOWN)
 	..addAction(() -> begin
-		//testSyncInteger(GetTriggerPlayer())
-		//testNetwork(GetTriggerPlayer())
-		if dbg
-			var aeiou = GetRandomInt(1, 8)
-			var abcde = GetRandomInt(1, 8)
-			if dbg and aeiou == abcde
-			print("penis")
+		testNetwork(GetTriggerPlayer())
 	end)
