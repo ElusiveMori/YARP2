@@ -1,77 +1,23 @@
 package Test
 
-import MultifileIO
-import MoriUtil
-import SyncSimple
-import LinkedList
-import Network
+let gc = InitGameCache("t.w3v")
 
-constant filename = "test1/test5.txt"
-
-interface Executable
-	function execute()
-
-function testWrite()
-	print("Writing file")
-	
-	let writer = new MessageWriter("multifiletest/asdf", true, GetLocalPlayer())
-	
-	for i = 0 to 9
-		execute(() -> begin
-			for j = 0 to 99
-				execute(() -> begin
-					writer.writeMessage("[super duper mega long long long long long long long long long long long long long long long long long long long long long long long long test message " + (i * 100 + j).toString() + "]")
-					Log.info("Wrote message " + (i * 100 + j).toString())
-				end)
-		end)
-	
-	destroy writer
-
-class Box<T>
-	T value
-
-	construct(T value)
-		this.value = value
-
-	function read() returns T
-		return value
-
-	function write(T value)
-		this.value = value
-
-function testNetwork(player originator)
-	let network = new Network(originator)
-
-	if localPlayer == originator
-		for i = 0 to 99
-			execute(() -> begin
-				for j = 0 to 99
-					network.getData().writeInteger(2)
-			end)
-
-	network.start()
-	network.onFinish((DataStream stream) -> begin
-		var sum = new Box<integer>(0)
-
-		for i = 0 to 99
-			execute(() -> begin
-				for j = 0 to 99
-					sum.write(sum.read() + stream.readInteger())
-			end)
-
-		print("sum of received integers: " + sum.read().toString())
-	end)
-
-constant boolean dbg = false
-
+function sync(player sender)
+	//TriggerSyncStart()
+	if localPlayer == sender
+		print("syncing...")
+		for i = 10000 to 10005
+			gc.saveString("a", i.toString(), i.toString())
+			gc.syncString("a", i.toString())
+		print("finished syncing...")
+	TriggerSyncReady()
+	print("received all syncs")
+	for i = 10000 to 10005
+		print(i.toString() + " - '" + gc.loadString("a", i.toString()) + "'")
 init
-	for i = 0 to 3
-		CreateUnit(Player(i), 'hfoo', 0, 0, 0)
-		for j = 0 to 3
-			SetPlayerAllianceStateBJ(Player(i), Player(j), bj_ALLIANCE_ALLIED_VISION)
-
 	CreateTrigger()
-	..registerAnyPlayerEvent(EVENT_PLAYER_ARROW_UP_DOWN)
+	..registerPlayerEvent(players[0], EVENT_PLAYER_ARROW_UP_DOWN)
+	..registerPlayerEvent(players[1], EVENT_PLAYER_ARROW_UP_DOWN)
 	..addAction(() -> begin
-		testNetwork(GetTriggerPlayer())
+		sync(GetTriggerPlayer())
 	end)
