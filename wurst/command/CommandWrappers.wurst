@@ -1,0 +1,25 @@
+package CommandWrappers
+
+import Command
+
+public abstract class SimpleCommand implements Command
+    override function run(CommandContext context, Arguments arguments)
+        callback(context, arguments)
+        context.continue()
+
+    abstract function callback(CommandContext context, Arguments arguments)
+
+    static function register(string command, SimpleCommand callback)
+        CommandRegistry.register(command, callback)
+
+public abstract class UnitCommand implements Command
+    override function run(CommandContext context, Arguments arguments)
+        for what in context.selection()
+            callback(context, arguments, what)
+        
+        context.continue()
+
+    abstract function callback(CommandContext context, Arguments arguments, unit what)
+
+    static function register(string command, UnitCommand callback)
+        CommandRegistry.register(command, callback)

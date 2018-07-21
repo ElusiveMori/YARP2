@@ -1,0 +1,9 @@
+package SelectionUtil
+
+import LinkedList
+import ClosureForGroups
+
+public function player.selectedUnits() returns LinkedList<unit>
+    let list = new LinkedList<unit>
+    forUnitsSelected(this, (unit u) -> list.add(u))
+    return list

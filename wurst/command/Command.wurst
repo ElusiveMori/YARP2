@@ -3,38 +3,240 @@ package Command
 import LinkedList
 import HashMap
 import Parser
-import MapBounds
+import Scripting
+import ErrorHandling
+import SelectionUtil
+import PlayerUtil
+import Execute
 
-interface CommandCallback
-	function execute(CommandThread thread)
+public interface Command
+	function run(CommandContext context, Arguments arguments)
+
+public class CommandRegistry
+	private static constant registry = new HashMap<int, Command>
+
+	static function register(string command, Command callback)
+		registry.put(command.getHash(), callback)
+	
+	static function get(string command) returns Command
+		return registry.get(command.getHash())
+	
+public class Argument
+	boolean isExpr
+	string value
+	Expr expr
+
+	construct(Expr expr)
+		this.isExpr = true
+		this.expr = expr
+	
+	construct(string value)
+		this.isExpr = false
+		this.value = value
+
+	ondestroy
+		if expr != null
+			destroy expr
+
+	function asReal(CommandContext context) returns real
+		real r
+		if isExpr
+			r = expr.eval(context.scriptContext())
+		else
+			r = value.toReal()
+		return r
+
+	function asInt(CommandContext context) returns int
+		int n
+		if isExpr
+			n = expr.eval(context.scriptContext()).toInt()
+		else
+			n = value.toInt()
+		return n
+
+	function asBool(CommandContext context) returns boolean
+		boolean b
+		if isExpr
+			b = expr.eval(context.scriptContext()) != 0
+		else
+			b = value.toBool()
+		return b
+	
+	function asString(CommandContext context) returns string
+		string s
+		if isExpr
+			s = expr.eval(context.scriptContext()).toString()
+		else
+			s = value
+		return s
+
+public class Arguments
+	private CommandContext context
+	private ArgumentParser parser
+	private constant args = new HashMap<int, Argument>
+	private var argCount = 0
+	private string rest = null
+
+	construct(ArgumentParser parser, CommandContext context)
+		this.parser = parser
+		this.context = context
+
+	ondestroy
+		destroy parser
+		for i = 0 to argCount - 1
+			destroy args.get(i)
+		destroy args
+
+	private function parseArgument() returns Argument
+		Argument argument = null
+		let argString = parser.nextToken()
+		if argString.charAt(0) == "!"
+			let expr = Niya.parse(argString)
+			if expr.error == null
+				argument = new Argument(expr.expr)
+			else
+				error(expr.error)
+		else
+			argument = new Argument(argString)
+
+		args.put(argCount, argument)
+		argCount++
+		return argument
+
+	function get(int index) returns Argument
+		while argCount <= index
+			this.parseArgument()
+		return args.get(index)
+
+	function getString(int index) returns string
+		return get(index).asString(context)
+
+	function getBool(int index) returns boolean
+		return get(index).asBool(context)
+
+	function getInt(int index) returns int
+		return get(index).asInt(context)
+
+	function getReal(int index) returns real
+		return get(index).asReal(context)
+
+	function getRest(boolean parsed) returns string
+		if rest == null
+			if parsed
+				rest = parser.restParsed()
+			else
+				rest = parser.restSimple()
+		return rest
 
 /**
-	Represents a single command to be executed
-	within a command thread context.
+	Holds data related to the execution of commands within a single context.
 **/
-public class Command
-	private string command
-	private static HashMap<string, CommandCallback> commands
+public class CommandContext
+	private constant commandStack = new LinkedList<CommandParser>()
+	private CommandExecutor executor
+	private ScriptContext scriptContext
+	private LinkedList<unit> selection
+	private var isHalted = false
 
-	construct(string command)
-		this.command = command
+	construct(CommandExecutor executor)
+		this.executor = executor
+		this.selection = executor.owner().selectedUnits()
 
-	function execute(CommandThread thread)
+	ondestroy
+		destroy selection
+		for parser in commandStack
+			destroy parser
+		destroy commandStack
 
-	static function register(string command, CommandCallback callback)
+	/** Executes the next command in the current CommandParser, popping the parser if it's empty. **/
+	protected function next()
+		if isHalted or commandStack.isEmpty()
+			executor.notifyFinished(this)
+			return
+
+		let commandParser = commandStack.peek()
+		if commandParser != null
+			if not commandParser.isFinished()
+				let command = commandParser.nextToken()
+				let argumentParser = new ArgumentParser(command)
+				let arguments = new Arguments(argumentParser, this)
+				let callback = CommandRegistry.get(arguments.getString(0))
+
+				if callback != null
+					run(callback, arguments)
+				destroy arguments
+			else
+				commandStack.pop()
+				destroy commandParser
+
+	/** Parses the command string, pushes it onto the stack and executes it. **/
+	function run(string command)
+		let parser = new CommandParser(command)
+		commandStack.push(parser)
+		next()
+
+	/** Directly executes the specified command **/
+	function run(Command command, Arguments arguments)
+		command.run(this, arguments)
+
+	/** Continues executing commands in this context and catches any errors **/
+	function continue()
+		let success = try() ->
+			next()
 		
+		if not success
+			Log.warn("Command [ID " + (this castTo int).toString() + "] by player " + owner().getNameColored() + " has crashed.")
+			Log.warn("Error: " + lastError)
 
-/**
-	Represents a single command "execution thread", 
-	typically created in response to each player command
-	and holding various thread context data.
-**/
-class CommandThread
-	LinkedList<Command> commandQueue
+	function selection() returns LinkedList<unit>
+		return selection
 
-/**
-	Represents a single player running various commands.
-**/
-class CommandExecutor
+	function scriptContext() returns ScriptContext
+		return scriptContext
+
+	function owner() returns player
+		return executor.owner()
+
+	function halt()
+		isHalted = true
+		for parser in commandStack
+			destroy parser
+
+
+public class CommandExecutor
+	private var contextList = new LinkedList<CommandContext>
+	private var scriptContext = new ScriptContext()
+	protected static var executors = new HashMap<player, CommandExecutor>
 	player owner
-	LinkedList<CommandThread> runningThreads	
+
+	construct(player owner)
+		this.owner = owner
+
+	protected function newContext() returns CommandContext
+		let context = new CommandContext(this)
+		contextList.add(context)
+		return context
+
+	protected function notifyFinished(CommandContext context)
+		contextList.remove(context)
+		destroy context
+
+	protected static function get(player who) returns CommandExecutor
+		return executors.get(who)
+
+	protected static function createExecutors()
+		forAllPlayers() (who) ->
+			let executor = new CommandExecutor(who)
+			executors.put(who, executor)
+
+	function owner() returns player
+		return owner
+
+	function execute(string command)
+		newContext().run(command)
+
+public function player.executor() returns CommandExecutor
+	return CommandExecutor.get(this)
+
+init
+	CommandExecutor.createExecutors()

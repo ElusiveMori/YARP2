@@ -1,0 +1,395 @@
+package Scripting
+
+import HashMap
+import GameTimer
+import LinkedList
+
+let operatorArity = new HashMap<int, int>
+let operators = new HashMap<int, Op>
+let reverseOperators = new Table()
+
+constant DEBUG_ENABLED = true
+
+function LOG_DEBUG(string message)
+	if DEBUG_ENABLED
+		Log.info(message)
+		
+
+enum ExprType
+	STRING
+	REAL
+
+tuple expr(int count, string op, string arg1, string arg2, string arg3)
+
+interface Op
+
+interface NullaryOp extends Op
+	function run(ScriptContext context) returns real
+
+interface UnaryOp extends Op
+	function run(ScriptContext context, Expr arg) returns real
+
+interface BinaryOp extends Op
+	function run(ScriptContext context, Expr arg1, Expr arg2) returns real
+
+interface TertiaryOp extends Op
+	function run(ScriptContext context, Expr arg1, Expr arg2, Expr arg3) returns real
+
+function registerOperator(int arity, string operator, Op impl)
+	let hash = operator.getHash()
+	operators.put(hash, impl)
+	operatorArity.put(hash, arity)
+	reverseOperators.saveString(impl castTo int, operator)
+
+function registerOperator(string operator, NullaryOp impl)
+	registerOperator(0, operator, impl)
+
+function registerOperator(string operator, UnaryOp impl)
+	registerOperator(1, operator, impl)
+
+function registerOperator(string operator, BinaryOp impl)
+	registerOperator(2, operator, impl)
+
+function registerOperator(string operator, TertiaryOp impl)
+	registerOperator(3, operator, impl)
+
+function getOperatorName(Op impl) returns string
+	return reverseOperators.loadString(impl castTo int)
+
+function initOperators()
+	registerOperator("*", (ScriptContext context, Expr arg1, Expr arg2) -> arg1.eval(context) * arg2.eval(context))
+	registerOperator("+", (ScriptContext context, Expr arg1, Expr arg2) -> arg1.eval(context) + arg2.eval(context))
+	registerOperator("/", (ScriptContext context, Expr arg1, Expr arg2) -> arg1.eval(context) / arg2.eval(context))
+	registerOperator("-", (ScriptContext context, Expr arg1, Expr arg2) -> arg1.eval(context) - arg2.eval(context))
+	registerOperator(">", (ScriptContext context, Expr arg1, Expr arg2) -> arg1.eval(context) > arg2.eval(context) ? 1 : 0)
+	registerOperator(">=", (ScriptContext context, Expr arg1, Expr arg2) -> arg1.eval(context) >= arg2.eval(context) ? 1 : 0)
+	registerOperator("<", (ScriptContext context, Expr arg1, Expr arg2) -> arg1.eval(context) < arg2.eval(context) ? 1 : 0)
+	registerOperator("<=", (ScriptContext context, Expr arg1, Expr arg2) -> arg1.eval(context) <= arg2.eval(context) ? 1 : 0)
+	registerOperator("=", (ScriptContext context, Expr arg1, Expr arg2) -> arg1.eval(context) == arg2.eval(context) ? 1 : 0)
+	registerOperator("mod", (ScriptContext context, Expr arg1, Expr arg2) -> (arg1.eval(context).toInt() mod arg2.eval(context).toInt()).toReal())
+	registerOperator("div", (ScriptContext context, Expr arg1, Expr arg2) -> (arg1.eval(context).toInt() div arg2.eval(context).toInt()).toReal())
+	registerOperator("time", (ScriptContext context) -> currentTime)
+	registerOperator("rand", (ScriptContext context, Expr arg1, Expr arg2) -> GetRandomReal(arg1.eval(context), arg2.eval(context)))
+	registerOperator("sin", (ScriptContext context, Expr arg) -> Sin(arg.eval(context)))
+	registerOperator("cos", (ScriptContext context, Expr arg) -> Cos(arg.eval(context)))
+	registerOperator("if") (ScriptContext context, Expr cond, Expr arg1, Expr arg2) ->
+		real value
+		if cond.eval(context) == 0
+			value = arg2.eval(context)
+		else
+			value = arg1.eval(context)
+		return value
+
+init
+	initOperators()
+
+public abstract class Expr
+	abstract function eval(ScriptContext context) returns real
+	abstract function toString() returns string
+
+class NullaryExpr extends Expr
+	private NullaryOp operator
+
+	construct(NullaryOp operator)
+		this.operator = operator
+
+	override function eval(ScriptContext context) returns real
+		return operator.run(context)
+
+	override function toString() returns string
+		return "O0(" + getOperatorName(operator) + ")"
+
+class UnaryExpr extends Expr
+	private UnaryOp operator
+	private Expr arg
+
+	construct(UnaryOp operator, Expr arg)
+		this.operator = operator
+		this.arg = arg
+
+	ondestroy
+		destroy arg
+
+	override function eval(ScriptContext context) returns real
+		return operator.run(context, arg)
+
+	override function toString() returns string
+		return "O1(" + getOperatorName(operator) + " " + arg.toString() + ")"
+
+class BinaryExpr extends Expr
+	private BinaryOp operator
+	private Expr arg1
+	private Expr arg2
+
+	construct(BinaryOp operator, Expr arg1, Expr arg2)
+		this.operator = operator
+		this.arg1 = arg1
+		this.arg2 = arg2
+
+	ondestroy
+		destroy arg1
+		destroy arg2
+
+	override function eval(ScriptContext context) returns real
+		return operator.run(context, arg1, arg2)
+
+	override function toString() returns string
+		return "O2(" + getOperatorName(operator) + " " + arg1.toString() + " " + arg2.toString() + ")" 
+		
+class TertiaryExpr extends Expr
+	private TertiaryOp operator
+	private Expr arg1
+	private Expr arg2
+	private Expr arg3
+
+	ondestroy
+		destroy arg1
+		destroy arg2
+		destroy arg3
+
+	construct(TertiaryOp operator, Expr arg1, Expr arg2, Expr arg3)
+		this.operator = operator
+		this.arg1 = arg1
+		this.arg2 = arg2
+		this.arg3 = arg3
+
+	override function eval(ScriptContext context) returns real
+		return operator.run(context, arg1, arg2, arg3)
+
+	override function toString() returns string
+		return "O3(" + getOperatorName(operator) + " " + arg1.toString() + " " + arg2.toString() + arg3.toString() + ")" 
+
+class VarGetExpr extends Expr
+	private string varName
+
+	construct(string varName)
+		this.varName = varName
+
+	override function eval(ScriptContext context) returns real
+		return context.getVar(varName)
+
+	override function toString() returns string
+		return "G(get " + varName + ")"
+
+class VarSetExpr extends Expr
+	private string varName
+	private Expr setExpr
+
+	construct(string varName, Expr setExpr)
+		this.varName = varName
+		this.setExpr = setExpr
+
+	ondestroy
+		destroy setExpr
+
+	override function eval(ScriptContext context) returns real
+		let value = setExpr.eval(context)
+		context.setVar(varName, value)
+		return value
+
+	override function toString() returns string
+		return "S(set " + varName + " " + setExpr.toString() + ")"
+
+class LiteralExpr extends Expr
+	private string strValue
+	private real value
+
+	construct(string value)
+		this.strValue = value
+		this.value = value.toReal()
+
+	override function eval(ScriptContext context) returns real
+		return value
+
+	function get() returns string
+		return strValue
+
+	override function toString() returns string
+		return "L'" + strValue + "'"
+
+tuple subexpr(Expr expr, int last, string error)
+tuple createexpr(Expr expr, string error)
+tuple word(string s, int last)
+public tuple parsedexpr(Expr expr, string error)
+
+function skipWhitespace(string input, int start) returns int
+	var pos = start
+	let length = input.length()
+
+	while pos < length
+		if input.charAt(pos) != " "
+			break
+		pos++
+
+	return pos
+
+function parseWord(string input, int start) returns word
+	var pos = start
+	var wordEnd = start
+	let length = input.length()
+
+	while pos < length
+		var char = input.charAt(pos)
+		if char == " " or char == ")" or char == "("
+			pos = skipWhitespace(input, pos)
+			break
+		wordEnd++
+		pos++
+
+	return word(input.substring(start, wordEnd), pos)
+
+function createExpr(string operator, LinkedList<Expr> exprlist) returns createexpr
+	var ret = createexpr(null, null)
+
+	switch operator
+		case "get"
+			if exprlist.size() == 1
+				let literal = exprlist.get(0)
+				if literal instanceof LiteralExpr
+					ret.expr = new VarGetExpr((literal castTo LiteralExpr).get())
+				else
+					ret.error = "expected literal in get-expression"
+			else
+				ret.error = "expected 1 arguments for get-expression"
+		case "set"
+			if exprlist.size() == 2
+				let literal = exprlist.get(0)
+				if literal instanceof LiteralExpr
+					ret.expr = new VarSetExpr((literal castTo LiteralExpr).get(), exprlist.get(1
+					))
+				else
+					ret.error = "expected literal in set-expression"
+			else
+				ret.error = "expected 2 arguments for set-expression"
+		default
+			let hash = operator.getHash()
+			if not operators.has(hash)
+				ret.error = "no such operator " + operator
+			else 
+				let arity = operatorArity.get(hash)
+				if arity != exprlist.size()
+					ret.error = "expected " + arity.toString() + " arguments for '" + operator + "' but got " + exprlist.size().toString()
+				else
+					switch arity
+						case 0
+							ret.expr = new NullaryExpr(operators.get(hash) castTo NullaryOp)
+						case 1
+							ret.expr = new UnaryExpr(operators.get(hash) castTo UnaryOp, exprlist.get(0))
+						case 2
+							ret.expr = new BinaryExpr(operators.get(hash) castTo BinaryOp, exprlist.get(0), exprlist.get(1))
+						case 3
+							ret.expr = new TertiaryExpr(operators.get(hash) castTo TertiaryOp, exprlist.get(0), exprlist.get(1), exprlist.get(2))
+	return ret
+
+function parseSubExpr(string input, int start) returns subexpr
+	var pos = skipWhitespace(input, start)
+	let length = input.length()
+
+	// if the starting character is an opening bracket
+	// then it is a proper expression
+	// otherwise it is simply a literal
+	if input.charAt(pos) == "("
+		pos++
+		pos = skipWhitespace(input, pos)
+		let word = parseWord(input, pos)
+		let operator = word.s
+		pos = word.last
+		let exprlist = new LinkedList<Expr>
+
+		while pos < length
+			pos = skipWhitespace(input, pos)
+			let char = input.charAt(pos)
+			if char == ")"
+				break
+			
+			let expr = parseSubExpr(input, pos)
+			if expr.error != null
+				for exprelem in exprlist
+					destroy exprelem
+				destroy exprlist
+				return subexpr(null, 0, expr.error)
+			exprlist.add(expr.expr)
+			pos = expr.last
+
+		let retexpr = createExpr(operator, exprlist)
+		if retexpr.error == null
+			return subexpr(retexpr.expr, pos + 1, null)
+		else
+			for exprelem in exprlist
+				destroy exprelem
+			destroy exprlist
+			return subexpr(null, 0, retexpr.error)
+	else
+		let word = parseWord(input, pos)
+		let literal = new LiteralExpr(word.s)
+		return subexpr(literal, word.last, null)
+
+function parseExpr(string input) returns parsedexpr
+	let expr = parseSubExpr(input, 0)
+	return parsedexpr(expr.expr, expr.error)
+
+public class ScriptContext
+	private constant variableContext = new Table()
+
+	function getVar(string varName) returns real
+		return variableContext.loadReal(varName.getHash())
+
+	function setVar(string varName, real value)
+		variableContext.saveReal(varName.getHash(), value)
+
+public class Niya
+	static function parse(string input) returns parsedexpr
+		var inputGroomed = input
+		if input.charAt(0) == "!"
+			inputGroomed = "(" + input.substring(1) + ")"
+		return parseExpr(inputGroomed)
+		
+@test
+function testLiteral()
+	let expr = parseSubExpr("123", 0)
+	assertTrue(expr.error == null)
+	assertTrue(expr.expr instanceof LiteralExpr)
+	assertTrue((expr.expr castTo LiteralExpr).get() == "123")
+
+@test
+function parseWordTest()
+	let word = parseWord("abc cde efg", 0)
+	assertTrue(word.s == "abc")
+
+@test
+function testGet()
+	let expr = parseSubExpr("(get abc)", 0)
+	assertTrue(expr.error == null)
+	assertTrue(expr.expr instanceof VarGetExpr)
+
+@test
+function testSet()
+	let expr = parseSubExpr("(set abc 10)", 0)
+	assertTrue(expr.error == null)
+	assertTrue(expr.expr instanceof VarSetExpr)
+
+@test
+function testExpr1()
+	initOperators()
+	let context = new ScriptContext()
+	let expr = parseSubExpr("(set abc (+ 1 2)", 0)
+	assertTrue(expr.error == null)
+	expr.expr.eval(context)
+	assertTrue(context.getVar("abc") == 3)
+
+@test
+function testExpr2()
+	initOperators()
+	let context = new ScriptContext()
+	let expr1 = parseSubExpr("(set #1 100)", 0)
+	let expr2 = parseSubExpr("(set #2 (* (get #1) 10))", 0)
+	let expr3 = parseSubExpr("(set #3 (- (get #2) 5))", 0)
+	assertTrue(expr1.error == null)
+	assertTrue(expr2.error == null)
+	assertTrue(expr3.error == null)
+	assertTrue(expr1.expr.eval(context) == 100)
+	assertTrue(expr2.expr.eval(context) == 1000)
+	assertTrue(expr3.expr.eval(context) == 995)
+	assertTrue(context.getVar("#1") == 100)
+	assertTrue(context.getVar("#2") == 1000)
+	assertTrue(context.getVar("#3") == 995)

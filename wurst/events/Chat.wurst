@@ -1,0 +1,19 @@
+package Chat
+
+import ClosureEvents
+import Command
+import Execute
+import ErrorHandling
+
+init
+    EventListener.add(EVENT_PLAYER_CHAT_FILTER) () ->
+        let who = GetTriggerPlayer()
+        let chatString = GetEventPlayerChatString()
+
+        let success = try() ->
+            who.executor().execute(chatString)
+
+        if not success
+            Log.warn("Command [" + chatString + "] by player " + who.getNameColored() + " has crashed.")
+            Log.warn("Error: " + lastError)
+        

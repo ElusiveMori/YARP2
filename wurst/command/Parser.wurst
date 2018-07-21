@@ -1,137 +1,217 @@
 package Parser
 
+/*
+	YARP features a fairly basic, but agile command syntax that
+	allows command composition and escaping of arguments.
+
+	There are three notable points here:
+		1. Commands can be composed into a sequence using the pipe (|) operator. Commands composed in this manner
+		will execute one after the other, as a single unit of work.
+
+		e.g. fa 115 | size 110 | color red | tint 100 50 50
+
+		2. Command arguments can be escaped using square brackets ([]). This is useful for aliases and arguments where whitespace
+		should be treated as input, rather than argument delimeter.
+		
+		e.g. alias myalias [cmd1 | cmd2 | cmd3 | cmd4]
+
+		3. Single characters can be escaped using the backslash (\). This is useful when you want to include a square bracket
+		as input. However, most commands where this is desirable will instead use the .restSimple() method which doesn't do any
+		of the parsing semantics, so it is rarely useful.
+
+		e.g. setname = \[Stuff\] -- if setname didn't use .restSimple()
+*/
+
 /**
 	Base class for command parsers.
+
+	Each subsequent call to .next() will yield the next token in this parser as a string.
+	The details of how the token is retrieved and it's semantic meaning differ based on the parser.
+
+	This class also provides some utilities for operating on the results of .next()
 **/
 public abstract class BaseParser
+	/** The string currently being parsed. **/
 	string input
-	integer pos
+	/** The parser's cursor position in the input. **/
+	var pos = 0
 
-	construct(string input, integer pos)
+	construct(string input)
 		this.input = input
-		this.pos = pos
 	
-	abstract function next() returns string
+	abstract function nextToken() returns string
 
 	function isFinished() returns boolean
 		return pos >= input.length()
 
+	/** Returns the rest of the input as a simple, unparsed string. **/
 	function restSimple() returns string
-		integer temp = pos
+		let temp = pos
 		pos = input.length()
-		
 
 		return input.substring(temp, pos)
 
+	/**	Returns the rest of the input as a concatenation of multiple parses. **/
 	function restParsed() returns string
 		string result = ""
 
 		while not isFinished()
-			result += next()
+			result += nextToken()
 
 			if not isFinished()
 				result += " "
 		
 		return result
 
-/**
+	function nextInt() returns int
+		return nextToken().toInt()
 
+	function nextBoolean() returns boolean
+		return nextToken().toBool()
+		
+	function nextReal() returns real
+		return nextToken().toReal()
+
+/**
+	Parses the input string as a sequence of commands delimetered by pipe operators (|).
+	It ignores pipe characters that are enclosed within square brackets, because those are
+	always command arguments.
 **/
 public class CommandParser extends BaseParser
-	construct(string input, integer pos)
-		super(input, pos)
+	construct(string input)
+		super(input)
 
-	override function next() returns string
-		integer depth = 0
-		boolean forceSkip = false
-		string arg = ""
+	override function nextToken() returns string
+		// localize class value to make it a bit faster
+		var pos = this.pos
 
-		while pos < input.length()
+		// start of the current command
+		var start = pos
+		var depth = 0
+		let input = this.input
+		let length = input.length()
+
+		while pos < length
 			string char = input.charAt(pos)
 
-			if forceSkip
-				forceSkip = false
-				pos++
-			else if char == "\\"
-				arg += input.charAt(pos + 1)
-				forceSkip = true
+			// since this is the command parsing stage,
+			// we still want to include the backslash
+			// because otherwise it would be twice-eliminated
+			// afterwards by the argument parser,
+			// but we want to ignore depth adjustment for
+			// [ and ] if it's backslashed, so just increment once more
+			if char == "\\"
 				pos++
 			else if char == "]" and depth > 0
-				pos++
 				depth--
-				arg += char
 			else if char == "["
-				pos++
 				depth++
-				arg += char
 			else if char == "|" and depth == 0
-				pos++
-				return arg
-			else
-				pos++
-				arg += char
+				break
 
-		return arg
+			pos++
 
+		this.pos = pos + 1
+		return input.substring(start, pos)
+
+/**
+	Parses the input string as a sequence of arguments delimetered by whitespaces and square brackets.
+	Each whitespace outside of brackets will start a new argument,
+	as well as each root-level bracket clause.
+**/
 public class ArgumentParser extends BaseParser
-	construct(string input, integer pos)
-		super(input, pos)
+	construct(string input)
+		super(input)
 
-	override function next() returns string
-		integer depth = 0
-		boolean forceSkip = false
-		string arg = ""
+	override function nextToken() returns string
+		// localize class value to make it a bit faster
+		var pos = this.pos
 
-		while pos < input.length()
+		var start = pos
+		var depth = 0
+		var argStore = ""
+		let input = this.input
+		let length = input.length()
+
+		while pos < length
 			string char = input.charAt(pos)
 
-			if forceSkip
-				forceSkip = false
+			if char == "\\"
+				argStore += input.substring(start, pos)
+				argStore += input.charAt(pos + 1)
 				pos++
-			else if char == "\\"
-				arg += input.charAt(pos + 1)
-				forceSkip = true
-				pos++
+				start = pos + 1
 			else if char == "]" and depth > 0
-				pos++
 				depth--
-
 				if depth == 0
-					return arg
-				else
-					arg += char
+					break
 			else if char == "["
-				if depth == 0 and arg != ""
-					return arg
-
-				if depth > 0
-					arg = arg + char
-
-				pos++
+				if depth == 0 and (argStore != "" or start != pos)
+					break
+				else if depth == 0
+					start++
 				depth++
 			else if char == " " and depth == 0
-				pos++
+				if argStore != "" or start != pos
+					break
+				else
+					start++
+			pos++
 
-				if arg.length() > 0
-					return arg
-			else
-				pos++
-				arg += char
+		this.pos = pos + 1
+		return argStore + input.substring(start, pos)
 
-		return arg
-	
+/**
+	Simple and fast whitespace-based parser with no additional semantics.
+**/		
 public class WhitespaceParser extends BaseParser
-	construct(string input, integer pos)
-		super(input, pos)
+	construct(string input)
+		super(input)
 
-	override function next() returns string
-		integer start = pos
+	override function nextToken() returns string
+		var pos = this.pos
+		let input = this.input
+		var start = pos
+		let length = input.length()
 		
-		while pos < input.length()
-			if input.charAt(pos - 1) == " "
-				pos++
-				return input.substring(start, pos - 1)
-			else
-				pos++
-		
+		while pos < length
+			if input.charAt(pos) == " "
+				break
+			pos++
+
+		this.pos = pos + 1
 		return input.substring(start, pos)
+
+@test
+function testArgumentParser()
+	let parser = new ArgumentParser("aaa b ccc dd  ee  f [hhhhh ] iii  [[jjj]] \\[asdf\\] \\[bfds")
+	parser.nextToken().assertEquals("aaa")
+	parser.nextToken().assertEquals("b")
+	parser.nextToken().assertEquals("ccc")
+	parser.nextToken().assertEquals("dd")
+	parser.nextToken().assertEquals("ee")
+	parser.nextToken().assertEquals("f")
+	parser.nextToken().assertEquals("hhhhh ")
+	parser.nextToken().assertEquals("iii")
+	parser.nextToken().assertEquals("[jjj]")
+	parser.nextToken().assertEquals("[asdf]")
+	parser.nextToken().assertEquals("[bfds")
+
+@test
+function testCommandParser()
+	let parser = new CommandParser("aaaa a aaa bb [cc] | ddd [fff | dd [nnn | sss]]")
+	parser.nextToken().assertEquals("aaaa a aaa bb [cc] ")
+	parser.nextToken().assertEquals(" ddd [fff | dd [nnn | sss]]")
+
+@test
+function testWhitespaceParser()
+	let parser = new WhitespaceParser("aa dd sd  ll eee   kk")
+	parser.nextToken().assertEquals("aa")
+	parser.nextToken().assertEquals("dd")
+	parser.nextToken().assertEquals("sd")
+	parser.nextToken().assertEquals("")
+	parser.nextToken().assertEquals("ll")
+	parser.nextToken().assertEquals("eee")
+	parser.nextToken().assertEquals("")
+	parser.nextToken().assertEquals("")
+	parser.nextToken().assertEquals("kk")

@@ -1,0 +1,32 @@
+package TestCommands
+
+import Command
+import CommandWrappers
+import Scripting
+import Execute
+import ErrorHandling
+
+init
+    CommandRegistry.register("test") (context, arguments) ->
+        print("arg1:" + arguments.getString(1))
+        print("arg2:" + arguments.getString(2))
+        print("arg3:" + arguments.getString(3))
+
+    CommandRegistry.register("exec") (context, arguments) ->
+        let success = try() -> 
+            let eee = Niya.parse(arguments.getString(1))
+            if eee.error != null
+                print(eee.error)
+            else
+                print(eee.expr.eval(context.scriptContext()))
+            print("Done!")
+        if not success
+            print("We fucked up")
+            print(lastError)
+        
+    UnitCommand.register("kill") (context, arguments, what) ->
+        what.kill()
+
+    SimpleCommand.register("spawn") (context, arguments) ->
+        for i = 0 to arguments.getInt(1) - 1
+            createUnit(context.owner(), 'hfoo', vec2(0, 0), angle(0))
