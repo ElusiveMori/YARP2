@@ -1,8 +1,0 @@
-package PlayerUtil
-
-interface PlayerCallback
-    function run(player who)
-
-public function forAllPlayers(PlayerCallback callback)
-    for i=0 to bj_MAX_PLAYER_SLOTS-1
-        callback.run(players[i])

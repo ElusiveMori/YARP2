@@ -1,0 +1,8 @@
+package Orders
+
+import OrderStringFactory
+
+let orderFactory = new OrderStringFactory
+
+public function getNewOrder() returns string
+    return orderFactory.getOrderString(false)

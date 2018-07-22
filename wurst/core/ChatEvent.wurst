@@ -1,4 +1,4 @@
-package Chat
+package ChatEvent
 
 import ClosureEvents
 import Command

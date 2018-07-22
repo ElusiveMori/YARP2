@@ -1,0 +1,113 @@
+package UnitTag
+
+import LinkedListModule
+import LinkedList
+import TextTagUtil
+import ClosureTimers
+import UnitIndexer
+import Camera
+import ClosureForGroups
+
+let cullRect = Rect(-2000, -2000, 2000, 2000)
+
+public class UnitTag
+    private static thistype array lookup
+    private static var currentlyVisible = new LinkedList<UnitTag>
+
+    private unit what
+    private TextTagUpdater tag
+    private string text = ""
+    private vec3 offset = vec3(0, 0, 0)
+    private var shown = false
+    
+    construct(unit what)
+        this.what = what
+        lookup[what.getIndex()] = this
+
+    ondestroy
+        if tag != null
+            destroy tag
+
+    function show()
+        shown = true
+
+    function hide()
+        shown = false
+        disable()
+
+    function setText(string text)
+        this.text = text
+        updateTag()
+
+    private function enable()
+        tag = new TextTagUpdater(what)
+        updateTag()
+
+    private function disable()
+        destroy tag
+        tag = null
+
+    private function calculateOffset()
+        offset = vec3(0, 0, 128)
+
+    private function updateTag()
+        if tag != null
+            tag.setText(text, 12)
+            tag.setOffset(offset)
+
+    private static function getFromUnit(unit what) returns thistype
+        return lookup[what.getIndex()]
+
+    protected static function controlVisibility()
+        cullRect.moveTo(getCameraTargetPosition())
+
+        let iter = currentlyVisible.staticItr()
+
+        while iter.hasNext()
+            let tag = iter.next()
+            if not tag.what.getPos().isInRect(cullRect)
+                tag.disable()
+                iter.remove()
+
+        forUnitsInRect(cullRect) (unit what) ->
+            let tag = getFromUnit(what)
+            if tag.tag == null and tag.shown
+                tag.enable()
+                currentlyVisible.push(tag)
+        
+class TextTagUpdater
+    use LinkedListModule
+    
+    private texttag tag = TextTagRecycler.getTextTag()
+    private unit parent
+    private vec3 offset
+
+    construct(unit parent)
+        this.parent = parent
+
+    ondestroy
+        if tag != null
+            TextTagRecycler.recycleTextTag(tag)
+
+    function setOffset(vec3 offset)
+        this.offset = offset
+
+    function setText(string text, real size)
+        if tag != null
+            tag.setText(text, size)
+
+    private function updatePosition()
+        if tag != null
+            tag.setPos(parent.getPos3Zero() + offset)
+
+    protected static function updatePositions()
+        for updater from TextTagUpdater.staticItr()
+            updater.updatePosition()
+
+init
+    doPeriodically(0.125) (periodic) ->
+        UnitTag.controlVisibility()
+
+    doPeriodically(ANIMATION_PERIOD) (periodic) ->
+        TextTagUpdater.updatePositions()
+        

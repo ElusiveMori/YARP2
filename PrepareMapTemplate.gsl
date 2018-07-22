@@ -1,0 +1,117 @@
+// Simple GMSI script to groom stock units and abilities 
+
+void PrepareStock() {
+	for (string i: map.objects) {
+		// remove all custom objects
+		if (isIdCustom(i)) {
+			unset(map.objects[i]);
+			continue;
+		}
+
+		Wc3obj o = map.objects[i];
+
+		// remove any modifications from the object
+		for (string j: o) {
+			unset(o[j]);
+		}
+
+		if (o.typetostr == "Unit") {
+			if (o.isbldg == 1) {
+				bool ancient = false;
+
+				for (string j: o["type"]) {
+					if (j == "ancient") {
+						ancient = true;
+						break;
+					}
+				}
+
+				// remove some stupid abilities
+				bool removedAbilities = false;
+				bool first = true;
+				string newList = "";
+
+				for (string j: o.abilList) {
+					if (j == "Abdl" || j == "Abds" || j == "Abgl" || j == "Abgs") {
+						removedAbilities = true;
+					} else {
+						if (first) {
+							newList = j;
+							first = false;
+						} else {
+							newList = newList + "," + j;
+						}
+					}
+				}
+
+				if (removedAbilities) {
+					o.abilList = newList;
+				}
+
+				if (!ancient) {
+					o["type"] = "mechanical,summoned";
+				}
+
+				o.preventPlace = "";
+				o.requirePlace = "";
+				o.uberSplat = "";
+				o.turnRate = 1.0;
+				o.spd = 1;
+				o.elevPts = 4;
+				o.elevRad = 50;
+				o.maxPitch = 0;
+				o.maxRoll = 0;
+			} else {
+				bool isWorker = false;
+
+				for (string j: o["type"]) {
+					if (j == "Peon") {
+						isWorker = true;
+						break;
+					}
+				}
+
+				if (isWorker) {
+					o.race = "human";
+				}
+
+				o.elevPts = 0;
+			}
+			o.lumbercost = 0;
+			o.goldcost = 0;
+			o.Requires = "";
+		//	o.elevPts = 0;
+		//	o.elevRad = 0;
+			o.bountyplus = 0;
+			o.bountydice = 0;
+			o.bountysides = 0;
+			o.upgrades = "";
+			o.bldtm = 1;
+			o.fused = 0;
+			o.fmade = 0;
+			o.stockMax = 1;
+			o.stockRegen = 0;
+			o.stockStart = 1;
+			o.cargoSize = 1;
+			o.unitShadow = "";
+			o.buildingShadow = "_";
+			o.Tip = o.Name;
+			if (o.nameCount == 1) {
+				o.Tip = o.Propernames;
+			}
+			o.Ubertip = "";
+			o.Awakentip = o.Tip;
+			o.Revivetip = o.Tip;
+			o.Requires1 = "";
+			o.Requires2 = "";
+			o.Requires3 = "";
+			o.Requires4 = "";
+			o.Requires5 = "";
+			o.Requires6 = "";
+			o.Requires7 = "";
+			o.Requires8 = "";
+		} else if (o.typetostr == "Ability") {
+			o.checkDep = 0;
+		}
+	}
+}

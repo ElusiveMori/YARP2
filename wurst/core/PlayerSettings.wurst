@@ -1,0 +1,132 @@
+package PlayerSettings
+
+import Persistable
+import YPrinting
+import LocalFiles
+import ClosureTimers
+
+public class PlayerSettings extends Persistable
+    private static thistype array lookup
+
+    private int preferredPlayerColor
+
+    private boolean preferredNameColorEnabled
+    private color preferredNameColor
+    private string preferredName
+
+    construct(player owner)
+        super(owner)
+        lookup[owner.getId()] = this
+
+    override function getClassId() returns string
+        return "yarp-settings"
+
+    override function getId() returns string
+        return "local"
+
+    override function onLoaded(LoadStatus status)
+        if localPlayer == owner
+            switch status
+                case FAIL_NOT_ENABLED
+                    YPrint.warn("Your player settings couldn't be loaded due to 'Allow Local Files' being disabled.")
+                    YPrint.warn("This also means you won't be able to load your builds.")
+                    YPrint.warn("You are still able to save them.")
+                    YPrint.warn("Look in F9 on information on how to enable Local Files.")
+                case FAIL_FILE_CORRUPT
+                    YPrint.warn("Your settings file has been corrupted and will be overwritten.")
+                case FAIL_DESERIALIZE
+                    this.save()
+                    YPrint.info("Your settings have been successfully initialized!")
+                    YPrint.info("You are also able to load builds.")
+                case FAIL_NO_PLAYER
+                case SUCCESS
+                    YPrint.info("Your settings have been successfully loaded!")
+                    YPrint.info("You are also able to load builds.")
+        applySettings()
+
+    override function onSaved()
+        if localPlayer == owner
+            YPrint.info("Your settings have been saved.")
+            if not LocalFiles.isEnabled()
+                YPrint.warn("However, you will need to enable Local Files in the future in order to load them.")
+    
+    override function supplyDefault()
+        preferredPlayerColor = -1
+        preferredNameColor = color(0, 0, 0)
+        preferredNameColorEnabled = false
+        preferredName = ""
+
+    override function serialize(Buffer buffer)
+        buffer.writeInt(preferredPlayerColor)
+
+        buffer.writeBoolean(preferredNameColorEnabled)
+
+        buffer.writeInt(preferredNameColor.red)
+        buffer.writeInt(preferredNameColor.green)
+        buffer.writeInt(preferredNameColor.blue)
+
+        buffer.writeString(preferredName)
+
+    override function deserialize(Buffer buffer)
+        preferredPlayerColor = buffer.readInt()
+
+        preferredNameColorEnabled = buffer.readBoolean()
+
+        preferredNameColor.red = buffer.readInt()
+        preferredNameColor.green = buffer.readInt()
+        preferredNameColor.blue = buffer.readInt()
+
+        preferredName = buffer.readString()
+
+    function enablePreferredName(string name)
+        this.preferredName = name
+        applySettings()
+        save()
+
+    function disablePreferredName()
+        this.preferredName = ""
+        applySettings()
+        save()
+
+    function enablePreferredNameColor(color c)
+        this.preferredNameColor = c
+        this.preferredNameColorEnabled = true
+        applySettings()
+        save()
+
+    function disablePreferredNameColor()
+        this.preferredNameColorEnabled = false
+        applySettings()
+        save()
+
+    function enablePreferredColor(playercolor pc)
+        this.preferredPlayerColor = pc.toInt()
+        applySettings()
+        save()
+
+    function disablePreferredColor()
+        this.preferredPlayerColor = -1
+        applySettings()
+        save()
+
+    function applySettings()
+        if preferredPlayerColor >= 0
+            owner.setColor(preferredPlayerColor.toPlayerColor())
+        else
+            owner.setColor(owner.getId().toPlayerColor())
+        
+        let name = preferredName == "" ? owner.getName() : preferredName
+
+        if preferredNameColorEnabled
+            owner.setName(preferredNameColor.toColorString() + name + "|r")
+        else
+            owner.setName(name)
+
+    static function get(player owner) returns thistype
+        return lookup[owner.getId()]
+            
+init
+    doAfter(1) ->
+        for i = 0 to bj_MAX_PLAYERS - 1
+            let settings = new PlayerSettings(players[i])
+            settings.load()

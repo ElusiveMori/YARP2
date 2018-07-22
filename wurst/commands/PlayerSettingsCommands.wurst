@@ -1,0 +1,34 @@
+package PlayerSettingsCommands
+
+import CommandWrappers
+import PlayerSettings
+import ColorUtil
+
+init
+    SimpleCommand.register("setting") (context, arguments) ->
+        let subCommand = arguments.getString(1)
+        let settings = PlayerSettings.get(context.owner())
+
+        switch subCommand
+            case "name"
+                let arg = arguments.getString(2)
+                if arg == "false" or arg == "off" or arg == "0"
+                    settings.disablePreferredName()
+                else
+                    settings.enablePreferredName(arg)
+            case "color"
+                let arg = arguments.getString(2)
+                if arg == "false" or arg == "off" or arg == "0"
+                    settings.disablePreferredColor()
+                else
+                    settings.enablePreferredColor(getColorFromString(arg))
+            case "namecolor"
+                let arg = arguments.getString(2)
+                if arg == "false" or arg == "off" or arg == "0"
+                    settings.disablePreferredNameColor()
+                else
+                    let r = arguments.getInt(2)
+                    let g = arguments.getInt(3)
+                    let b = arguments.getInt(4)
+                    settings.enablePreferredNameColor(color(r, g, b))
+

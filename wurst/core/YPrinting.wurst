@@ -1,0 +1,32 @@
+package YPrinting
+
+constant DEBUG_PREFIX      = "|c0036a97dDebug >> |r"
+constant WARNING_PREFIX    = "|c00b65e2bWarning >> |r"
+constant MESSAGE_PREFIX    = "|c006d619e>> |r"
+constant HINT_PREFIX       = "|c0051e177Hint >> |r"
+constant OOC_PREFIX        = "|c00b65949OOC >> |r "
+constant DEBUG_HIGHLIGHT   = "|c008fc9e6"
+constant WARNING_HIGHLIGHT = "|c00eab257"
+constant GENERIC_HIGHLIGHT = "|c00a6bfe2"
+constant ASSERT_HIGHLIGHT  = "|c00a93c36"
+
+constant MESSAGE_DURATION = 30.
+
+function colorize(string colorstring, string message) returns string
+    return colorstring + message + "|r"
+
+public class YPrint
+    static function highlight(string message) returns string
+        return colorize(GENERIC_HIGHLIGHT, message)
+
+    static function info(string message)
+        printTimed(MESSAGE_PREFIX + message, MESSAGE_DURATION)
+
+    static function warn(string message)
+        printTimed(WARNING_PREFIX + message, MESSAGE_DURATION)
+
+    static function debug(string message)
+        printTimed(DEBUG_PREFIX + message, MESSAGE_DURATION)
+
+    static function hint(string message)
+        printTimed(HINT_PREFIX + message, MESSAGE_DURATION)

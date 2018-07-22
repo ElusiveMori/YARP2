@@ -1,6 +1,7 @@
 package CommandWrappers
 
 import Command
+import YUnit
 
 public abstract class SimpleCommand implements Command
     override function run(CommandContext context, Arguments arguments)
@@ -15,11 +16,11 @@ public abstract class SimpleCommand implements Command
 public abstract class UnitCommand implements Command
     override function run(CommandContext context, Arguments arguments)
         for what in context.selection()
-            callback(context, arguments, what)
+            callback(context, arguments, yunit(what))
         
         context.continue()
 
-    abstract function callback(CommandContext context, Arguments arguments, unit what)
+    abstract function callback(CommandContext context, Arguments arguments, yunit what)
 
     static function register(string command, UnitCommand callback)
         CommandRegistry.register(command, callback)

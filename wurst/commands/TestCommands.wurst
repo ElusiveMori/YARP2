@@ -5,6 +5,8 @@ import CommandWrappers
 import Scripting
 import Execute
 import ErrorHandling
+import PreloadIO
+import TextTagUtil
 
 init
     CommandRegistry.register("test") (context, arguments) ->
@@ -23,10 +25,10 @@ init
         if not success
             print("We fucked up")
             print(lastError)
-        
-    UnitCommand.register("kill") (context, arguments, what) ->
-        what.kill()
 
     SimpleCommand.register("spawn") (context, arguments) ->
         for i = 0 to arguments.getInt(1) - 1
             createUnit(context.owner(), 'hfoo', vec2(0, 0), angle(0))
+
+    SimpleCommand.register("testfile") (context, arguments) ->
+        IOWriter.createFolder(arguments.getString(1))

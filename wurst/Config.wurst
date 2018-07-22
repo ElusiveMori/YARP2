@@ -1,0 +1,4 @@
+package Config
+
+public constant DEBUG_MODE = true
+

@@ -1,0 +1,27 @@
+package PlayerUtil
+
+interface PlayerCallback
+    function run(player who)
+
+public function forAllPlayers(PlayerCallback callback)
+    for i=0 to bj_MAX_PLAYER_SLOTS-1
+        callback.run(players[i])
+
+public function findPlayerByString(string name) returns player
+    player found = null
+    let lowerName = name.toLowerCase()
+    switch name
+        case "neutral"
+            found = players[GetPlayerNeutralPassive()]
+        case "hostile"
+            found = players[GetPlayerNeutralAggressive()]
+        default
+            for i = 0 to bj_MAX_PLAYERS - 1
+                let who = players[i]
+
+                if who.getName().toLowerCase().indexOf(lowerName) > 0
+                    found = who
+                    break
+    return found
+    
+    

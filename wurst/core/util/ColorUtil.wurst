@@ -1,0 +1,48 @@
+package ColorUtil
+
+import HashMap
+
+let colors = new HashMap<int, int>
+
+function c(string name, int id)
+    colors.put(name.getHash(), id)
+
+function registerColors()
+    c("red", 0)
+    c("blue", 1)
+    c("teal", 2)
+    c("purple", 3)
+    c("yellow", 4)
+    c("orange", 5)
+    c("green", 6)
+    c("pink", 7)
+    c("gray", 8)
+    c("light blue", 9)
+    c("lightblue", 9)
+    c("lb", 9)
+    c("dark green", 10)
+    c("darkgreen", 10)
+    c("dg", 10)
+    c("brown", 11)
+    c("maroon", 12)
+    c("navy", 13)
+    c("turquoise", 14)
+    c("violet", 15)
+    c("wheat", 16)
+    c("peach", 17)
+    c("mint", 18)
+    c("lavender", 19)
+    c("coal", 20)
+    c("snow", 21)
+    c("emerald", 22)
+    c("peanut", 23)
+    c("black", 24)
+
+public function getColorFromString(string name) returns playercolor
+    let hash = name.getHash()
+    if colors.has(hash)
+        return colors.get(hash).toPlayerColor()
+    else
+        return 24 .toPlayerColor()
+init
+    registerColors()

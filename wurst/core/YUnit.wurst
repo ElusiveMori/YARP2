@@ -1,0 +1,146 @@
+package YUnit
+
+import UnitIndexer
+import Config
+import GameTimer
+import UnitTag
+
+import ObjectIdGenerator
+import AbilityObjEditing
+import AbilityIds
+import Orders
+
+constant ABIL_UPROOT_ID = "Aro1"
+constant ABIL_UPROOT_BOOK_ID = compiletime(ABIL_ID_GEN.next())
+constant ABIL_UPROOT_BOOK_ORDER = compiletime(getNewOrder())
+
+function y(yunit what) returns YUnitData
+    return YUnitData.getBy(what.u)
+
+/**
+    Wrapper around the native unit type to provide some adjusted
+    getters and setters for units.
+**/
+public tuple yunit(unit u)
+
+public function yunit.remove()
+    this.u.remove()
+
+public function yunit.kill()
+    this.u.kill()
+
+public function yunit.explode()
+    this.u.explode()
+
+public function yunit.setScale(real scale)
+    y(this).scale = scale
+    this.u.setScale(scale)
+
+public function yunit.getScale() returns real
+    return y(this).scale
+
+public function yunit.getFacing() returns angle
+    if getElapsedGameTime() - y(this).lastFacingSet > 0.2
+        return this.u.getFacingAngle()
+    else
+        return y(this).lastFacing
+
+public function yunit.setFacing(angle facing)
+    y(this).lastFacing = facing
+    y(this).lastFacingSet = getElapsedGameTime()
+    this.u.setFacing(facing)
+
+public function yunit.uproot()
+    if this.u.isType(UNIT_TYPE_STRUCTURE) and this.u.getAbilityLevel(ABIL_UPROOT_BOOK_ID) == 0
+        let angle = this.u.getFacingAngle()
+        this.u.addAbility(ABIL_UPROOT_BOOK_ID)
+        this.u.issueImmediateOrder("unroot")
+        this.u.setFacing(angle)
+
+public function yunit.fly()
+    this.uproot()
+    if this.u.addAbility(AbilityIds.crowForm)
+        this.u.removeAbility(AbilityIds.crowForm)
+
+public function yunit.setHeight(real height)
+    this.fly()
+    y(this).flyHeight = height
+    this.u.setFlyHeight(height, 10000000)
+
+public function yunit.getHeight() returns real
+    return y(this).flyHeight
+
+public function yunit.setName(string name)
+    this.u.setName(name)
+
+public function yunit.getName() returns string
+    return this.u.getName()
+
+public function yunit.setHeroName(string name)
+    this.u.setProperName(name)
+
+public function yunit.getHeroName() returns string
+    return this.u.getProperName()
+
+public function yunit.setTint(colorA tint)
+    this.u.setVertexColor(tint)
+    y(this).tint = tint
+
+public function yunit.getTint() returns colorA
+    return y(this).tint
+
+public function yunit.getTag() returns UnitTag
+    return y(this).tag
+
+public function yunit.setColor(playercolor pc)
+    y(this).pc = pc
+    this.u.setColor(pc)
+
+public function yunit.getColor() returns playercolor
+    return y(this).pc
+
+class YUnitData
+    unit what
+    real scale = 1
+    real lastFacingSet = 0
+    angle lastFacing = angle(0)
+    real flyHeight = 0
+    colorA tint = COLOR_WHITE
+    UnitTag tag
+    playercolor pc
+
+    construct(unit what)
+        this.what = what
+
+        tag = new UnitTag(what)
+        what.setScale(1)
+        what.setVertexColor(COLOR_WHITE)
+
+    ondestroy
+        destroy tag
+
+    static function getBy(int index) returns thistype
+        return index castTo thistype
+
+    static function getBy(unit what) returns thistype
+        return getBy(what.getIndex())
+
+init
+    onUnitIndex() ->
+        let what = getIndexedUnit()
+        if DEBUG_MODE
+            let yunit = new YUnitData(what)
+            if (yunit castTo int) != what.getIndex()
+                Log.warn("Instances of YUnitData and UnitIndex are diverging! Expected " + what.getIndex().toString() + " as index but got " + (yunit castTo int).toString())
+        else
+            new YUnitData(what)
+
+    onUnitDeindex() ->
+        destroy getDeindexedUnit().getIndex() castTo YUnitData
+
+@compiletime function generateObjects()
+    new AbilityDefinitionSpellBook(ABIL_UPROOT_BOOK_ID)
+        ..setSpellList(0, ABIL_UPROOT_ID)
+        ..setMaximumSpells(0, 1)
+        ..setMinimumSpells(0, 1)
+        ..setBaseOrderID(0, ABIL_UPROOT_BOOK_ORDER)

@@ -1,0 +1,58 @@
+package TextTagUtil
+
+import LinkedList
+import HashMap
+
+public class TextTagRecycler
+    private static var recycled = new LinkedList<TextTagHandle>
+
+    static function getTextTag() returns texttag
+        texttag tag = null
+
+        if recycled.isEmpty()
+            let tagHandle = new TextTagHandle()
+            if tagHandle != null
+                tag = tagHandle..reset().tag
+        else
+            tag = recycled.pop()..reset().tag
+        
+        return tag
+
+    static function recycleTextTag(texttag tag)
+        tag.setVisibility(false)
+        recycled.push(TextTagHandle.fromTextTag(tag))
+
+    static function pregenerateTextTags()
+        for i = 0 to 89
+            recycleTextTag(getTextTag())
+
+class TextTagHandle
+    protected texttag tag
+    private static var lookup = new HashMap<int, thistype>
+
+    construct()
+        tag = CreateTextTag()
+        lookup.put(tag.getHandleId(), this)
+
+    ondestroy
+        DestroyTextTag(tag)
+
+    function reset()
+        tag.setVisibility(true)
+        tag.setText("", 0)
+
+    protected static function getNew() returns thistype
+        let tag = new TextTagHandle()
+
+        if (tag castTo int) > 90
+            Log.warn("Creating too many text-tags!")
+            destroy tag
+            return null
+        else
+            return tag
+
+    protected static function fromTextTag(texttag tag) returns thistype
+        return lookup.get(tag.getHandleId())
+
+init
+    TextTagRecycler.pregenerateTextTags()
