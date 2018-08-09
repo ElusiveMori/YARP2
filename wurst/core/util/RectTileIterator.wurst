@@ -1,0 +1,43 @@
+package RectTileIterator
+
+import TerrainUtils
+import MapBounds
+
+public class RectTileIterator
+    private rect area
+    private int minX
+    private int minY
+    private int maxX
+    private int maxY
+    private int currentX
+    private int currentY
+    private bool closed = false
+
+    construct(rect area)
+        this.area = area
+        minX = ((area.getMinX() - boundMin.x + 64) / 128.).round()
+        minY = ((area.getMinY() - boundMin.y + 64) / 128.).round()
+        maxX = ((area.getMaxX() - boundMin.x - 64) / 128.).round()
+        maxY = ((area.getMaxY() - boundMin.y - 64) / 128.).round()
+        currentX = minX
+        currentY = minY
+
+    function next() returns tile
+        let x = currentX
+        let y = currentY
+
+        currentX++
+        if currentX > maxX
+            currentX = minX
+            currentY++
+
+        return tile(x, y)
+
+    function hasNext() returns boolean
+        return not closed and currentY <= maxY
+
+    function close()
+        closed = true
+
+public function rect.tileIterator() returns RectTileIterator
+    return new RectTileIterator(this)

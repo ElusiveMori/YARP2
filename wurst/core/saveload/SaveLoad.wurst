@@ -1,0 +1,65 @@
+package SaveLoad
+
+import initlater YARP
+import initlater AreaData
+import initlater UnitData
+
+interface LoadActionCallback
+    function run()
+
+public class RegionSaveData extends Persistable
+    private string name
+    private rect area
+    private var areaData = new AreaData
+    private var offset = vec2(0, 0)
+
+    construct(player owner, string name)
+        super(owner)
+        this.name = name
+        this.offset = offset
+
+    ondestroy
+        destroy areaData
+        area.remove()
+
+    override function getClassId() returns string
+        return "region-saves"
+
+    override function getId() returns string
+        return name
+
+    override function supplyDefault()
+        skip
+
+    override function serialize(Buffer buffer)
+        buffer.writeReal(area.getMaxX() - area.getMinX())
+        buffer.writeReal(area.getMaxY() - area.getMinY())
+
+        areaData.serialize(buffer)
+
+    override function deserialize(Buffer buffer)
+        let width = buffer.readReal()
+        let height = buffer.readReal()
+
+        area.resize(vec2(-width / 2, -height / 2) + playableCenter, vec2(width / 2, height / 2) + playableCenter)
+
+        areaData.deserialize(buffer)
+
+    override function onSaved()
+        destroy this
+
+    override function onLoaded(LoadStatus status)
+        if status == LoadStatus.SUCCESS
+            area.moveTo(offset)
+            areaData.apply(area)
+        destroy this
+
+    function startLoad(vec2 offset)
+        this.offset = offset
+        this.area = Rect(0, 0, 0, 0)
+        load()
+
+    function startSave(rect area)
+        this.area = area.copy()
+        areaData.scan(area)
+        save()

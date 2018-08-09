@@ -1,12 +1,12 @@
 package TestCommands
 
-import Command
-import CommandWrappers
-import Scripting
-import Execute
-import ErrorHandling
-import PreloadIO
-import TextTagUtil
+import initlater YARP
+
+class Box<T>
+    T v
+
+    construct(T v)
+        this.v = v
 
 init
     CommandRegistry.register("test") (context, arguments) ->
@@ -27,8 +27,54 @@ init
             print(lastError)
 
     SimpleCommand.register("spawn") (context, arguments) ->
-        for i = 0 to arguments.getInt(1) - 1
-            createUnit(context.owner(), 'hfoo', vec2(0, 0), angle(0))
+        let idString = arguments.getString(2)
+        int id
+        if idString.charAt(0) == "_"
+            id = fromRawCode(idString.substring(1))
+        else
+            id = UnitId(idString)
 
-    SimpleCommand.register("testfile") (context, arguments) ->
-        IOWriter.createFolder(arguments.getString(1))
+        for i = 0 to arguments.getInt(1) - 1
+            createUnit(context.owner(), id, vec2(0, 0), angle(0))
+
+    SimpleCommand.register("n2") (context, argument) ->
+        var s = ""
+        for i = 0 to 1023
+            s += "a"
+        context.owner().setName(s)
+        print(context.owner().getName())
+        print(context.owner().getName().length())
+
+    SimpleCommand.register("loadme") (context, argument) ->
+        execute() ->
+            PlayerSettings.get(context.owner()).load()
+
+    SimpleCommand.register("network") (context, arguments) ->
+        let net = new Network(context.owner())
+        let owner = context.owner()
+
+        if localPlayer == owner
+            net.getData().writeInt(1)
+            print("sending 1")
+
+        net.start() (status, buffer) ->
+            if localPlayer != owner
+                print("received " + buffer.readInt().toString())
+
+    SimpleCommand.register("splittest") (context, arguments) ->
+        let nlparser = new LineSplitterParser(arguments.getString(2), arguments.getInt(1))
+        print(nlparser.process())
+
+    SimpleCommand.register("centerfactor") (context, arguments) ->
+        centerFactor = arguments.getReal(1)
+    
+    SimpleCommand.register("offset") (context, arguments) ->
+        staticOffset = arguments.getReal(1)
+
+    SimpleCommand.register("logtest") (context, arguments) ->
+        var box = new Box(0)
+        try() ->
+            while true
+                BlzSetAbilityTooltip('Aabs', "asdfghj", 0)
+                box.v++
+        print(box.v)

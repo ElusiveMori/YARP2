@@ -1,14 +1,6 @@
 package YUnit
 
-import UnitIndexer
-import Config
-import GameTimer
-import UnitTag
-
-import ObjectIdGenerator
-import AbilityObjEditing
-import AbilityIds
-import Orders
+import initlater YARP
 
 constant ABIL_UPROOT_ID = "Aro1"
 constant ABIL_UPROOT_BOOK_ID = compiletime(ABIL_ID_GEN.next())
@@ -71,6 +63,7 @@ public function yunit.getHeight() returns real
     return y(this).flyHeight
 
 public function yunit.setName(string name)
+    y(this).tag.info.setName(name)
     this.u.setName(name)
 
 public function yunit.getName() returns string
@@ -99,6 +92,30 @@ public function yunit.setColor(playercolor pc)
 public function yunit.getColor() returns playercolor
     return y(this).pc
 
+public function yunit.setLife(real life)
+    this.u.setLife(life)
+
+public function yunit.getLife() returns real
+    return this.u.getLife()
+
+public function yunit.setMaxLife(int life)
+    this.u.setMaxHP(life)
+
+public function yunit.getMaxLife() returns real
+    return this.u.getMaxHP()
+
+public function yunit.setMana(real life)
+    this.u.setMana(life)
+
+public function yunit.getMana() returns real
+    return this.u.getMana()
+
+public function yunit.setMaxMana(int life)
+    this.u.setMaxMana(life)
+
+public function yunit.getMaxMana() returns real
+    return this.u.getMaxMana()
+
 class YUnitData
     unit what
     real scale = 1
@@ -112,9 +129,10 @@ class YUnitData
     construct(unit what)
         this.what = what
 
-        tag = new UnitTag(what)
-        what.setScale(1)
-        what.setVertexColor(COLOR_WHITE)
+        if not what.isSpecial()
+            tag = new UnitTag(what)
+            what.setScale(1)
+            what.setVertexColor(COLOR_WHITE)
 
     ondestroy
         destroy tag
@@ -140,7 +158,8 @@ init
 
 @compiletime function generateObjects()
     new AbilityDefinitionSpellBook(ABIL_UPROOT_BOOK_ID)
-        ..setSpellList(0, ABIL_UPROOT_ID)
-        ..setMaximumSpells(0, 1)
-        ..setMinimumSpells(0, 1)
-        ..setBaseOrderID(0, ABIL_UPROOT_BOOK_ORDER)
+        ..setLevels(1)
+        ..setSpellList(1, ABIL_UPROOT_ID)
+        ..setMaximumSpells(1, 1)
+        ..setMinimumSpells(1, 1)
+        ..setBaseOrderID(1, ABIL_UPROOT_BOOK_ORDER)

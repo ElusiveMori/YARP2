@@ -1,0 +1,11 @@
+package SequenceGenerator
+
+public class SequenceGenerator
+    private var i = 0
+
+    function next() returns int
+        i++
+        return i - 1
+
+    function total() returns int
+        return i

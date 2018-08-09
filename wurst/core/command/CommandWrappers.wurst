@@ -1,7 +1,6 @@
 package CommandWrappers
 
-import Command
-import YUnit
+import initlater YARP
 
 public abstract class SimpleCommand implements Command
     override function run(CommandContext context, Arguments arguments)
@@ -15,8 +14,11 @@ public abstract class SimpleCommand implements Command
 
 public abstract class UnitCommand implements Command
     override function run(CommandContext context, Arguments arguments)
+        let who = context.owner()
+
         for what in context.selection()
-            callback(context, arguments, yunit(what))
+            if what.isModifiableBy(who)
+                callback(context, arguments, yunit(what))
         
         context.continue()
 

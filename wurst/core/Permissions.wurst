@@ -1,0 +1,35 @@
+package Permissions
+
+import initlater YARP
+
+public constant ACCESS_LEVEL_OWNER = 4
+public constant ACCESS_LEVEL_ADMIN = 3
+public constant ACCESS_LEVEL_PLAYER = 2
+public constant ACCESS_LEVEL_NEUTRAL = 1
+
+int array playerLevels
+
+public function unit.isSpecial() returns boolean
+    let id = this.getTypeId()
+    return id == SPAWNER_ID or 
+        id == REGION_SPECIFIER_ID or
+        this.isShop()
+
+public function unit.isShop() returns boolean
+    return REGISTRY_SHOPS.has(this.getTypeId())
+
+public function unit.isRemovable() returns boolean
+    return not this.isSpecial()
+
+public function unit.isAccessibleBy(player who) returns boolean
+    return who == this.getOwner()
+
+public function unit.isModifiableBy(player who) returns boolean
+    return not this.isSpecial() and who == this.getOwner()
+
+init
+    playerLevels[0] = ACCESS_LEVEL_OWNER
+
+    for i = 1 to bj_MAX_PLAYERS - 1
+        playerLevels[i] = ACCESS_LEVEL_PLAYER
+        

@@ -1,0 +1,24 @@
+package UnitData
+
+import YARP
+
+class SingleUnitData implements BufferSerializable
+    override function serialize(Buffer buffer)
+    override function deserialize(Buffer buffer)
+
+class MultipleUnitData implements BufferSerializable
+    private let list = new HashList<SingleUnitData>
+
+    override function serialize(Buffer buffer)
+        buffer.writeInt(list.size())
+
+        for data in list
+            data.serialize(buffer)
+
+    override function deserialize(Buffer buffer)
+        let size = buffer.readInt()
+
+        for i = 0 to size - 1
+            let data = new SingleUnitData
+            data.deserialize(buffer)
+            list.add(data)

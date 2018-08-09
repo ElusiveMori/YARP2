@@ -1,8 +1,6 @@
 package UnitPropertyCommands
 
-import Command
-import CommandWrappers
-import YUnit
+import initlater YARP
 
 init
     UnitCommand.register("remove") (context, arguments, what) ->
@@ -33,10 +31,10 @@ init
         what.setHeight(what.getHeight() + arguments.getReal(1))
 
     UnitCommand.register("name") (context, arguments, what) ->
-        what.setName(arguments.getRest(false))
+        what.setName(arguments.getRest(true))
 
     UnitCommand.register("heroname") (context, arguments, what) ->
-        what.setHeroName(arguments.getRest(false))
+        what.setHeroName(arguments.getRest(true))
 
     UnitCommand.register("tint") (context, arguments, what) ->
         let r = ((arguments.getReal(1) / 100) * 255).toInt()
@@ -45,7 +43,8 @@ init
         let a = ((arguments.getReal(4) / 100) * 255).toInt()
         what.setTint(colorA(r, g, b, a))
 
-    UnitCommand.register("tag") (context, arguments, what) ->
-        what.getTag()
-            ..setText(arguments.getString(1))
-            ..show()
+    UnitCommand.register("color") (context, arguments, what) ->
+        what.setColor(getColorFromString(arguments.getRest(true)))
+
+    UnitCommand.register("say") (context, arguments, what) ->
+        what.getTag().info.addSay(arguments.getRest(false))

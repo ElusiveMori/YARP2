@@ -1,14 +1,6 @@
 package Command
 
-import LinkedList
-import HashMap
-import Parser
-import Scripting
-import ErrorHandling
-import SelectionUtil
-import PlayerUtil
-import Execute
-
+import initlater YARP
 public interface Command
 	function run(CommandContext context, Arguments arguments)
 
@@ -140,7 +132,7 @@ public class CommandContext
 
 	construct(CommandExecutor executor)
 		this.executor = executor
-		this.selection = executor.owner().selectedUnits()
+		this.selection = executor.owner().selectedUnitsList()
 
 	ondestroy
 		destroy selection

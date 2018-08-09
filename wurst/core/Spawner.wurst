@@ -1,0 +1,105 @@
+package Spawner
+
+import initlater YARP
+
+public constant SPAWNER_ID = compiletime(UNIT_ID_GEN.next())
+public constant CARGO_HOLD_ID = compiletime(ABIL_ID_GEN.next())
+public constant CARGO_LOAD_ID = compiletime(ABIL_ID_GEN.next())
+public constant CARGO_UNLOAD_ID = compiletime(ABIL_ID_GEN.next())
+
+public class Spawner
+    private static unit array lookup
+
+    static function getSpawner(player who) returns unit
+        return lookup[who.getId()]
+
+    protected static function onSpawnerPointOrder()
+        let spawner = GetOrderedUnit()
+        let order = GetIssuedOrderId()
+
+        if spawner.getTypeId() != SPAWNER_ID
+            return
+
+        if order == Orders.smart or order == Orders.move
+            spawner.setPos(getOrderPos())
+        else if order == Orders.patrol
+            spawner.issueImmediateOrderById(Orders.stop)
+        else if order != Orders.unloadall
+            let pos = getOrderPos()
+            let dir = (pos - spawner.getPos()).norm()
+            spawner.setPos(pos + dir * 512)
+
+    protected static function onSpawnerTargetOrder()
+        let spawner = GetOrderedUnit()
+        let target = GetOrderTargetUnit()
+        let order = GetIssuedOrderId()
+
+        if spawner.getTypeId() != SPAWNER_ID or target == null
+            return
+
+        if order == Orders.smart and target.getOwner() != spawner.getOwner()
+            spawner.issueImmediateOrderById(Orders.stop)
+
+    protected static function initSpawners()
+        for i = 0 to bj_MAX_PLAYERS - 1
+            if players[i].isIngame()
+                let spawner = createUnit(players[i], SPAWNER_ID, vec2(512, 0).rotate((i * (360 / bj_MAX_PLAYERS)).asAngleDegrees()), angle(0))
+                lookup[i] = spawner
+                spawner.setPathing(false)
+                
+        EventListener.add(EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER) () ->
+            onSpawnerPointOrder()
+
+        EventListener.add(EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER) () ->
+            onSpawnerTargetOrder()
+
+public function player.getSpawner() returns unit
+    return Spawner.getSpawner(this)
+
+init
+    Spawner.initSpawners()
+
+@compiletime function generateSpawner()
+    new UnitDefinition(SPAWNER_ID, 'hfoo')
+        ..setName("Spawner")
+        ..setMovementHeight(400)
+        ..setSpeedBase(522)
+        ..setTurnRate(3)
+        ..setMovementType(MovementType.Fly)
+        ..setUpgradesUsed("")
+        ..setHitPointsMaximumBase(100)
+        ..setSightRadiusDay(1500)
+        ..setSightRadiusNight(1500)
+        ..setTransportedSize(12)
+        ..setCollisionSize(0)
+        ..setUnitSoundSet("")
+        ..setIconGameInterface("ReplaceableTextures\\WorldEditUI\\StartingLocation.blp")
+        ..setMaximumPitchAngledegrees(0)
+        ..setMaximumRollAngledegrees(0)
+        ..setModelFile("Objects\\StartLocation\\StartLocation.mdl")
+        ..setScalingValue(0.33)
+        ..setSelectionScale(1.80)
+        ..setShadowImageUnit("")
+        ..setAttacksEnabled(0)
+        ..setDefenseUpgradeBonus(0)
+        ..setDefenseBase(0)
+        ..setArmorType(ArmorType.Divine)
+        ..setTooltipBasic("")
+        ..setTooltipExtended("This is a spawner.")
+        ..setUnitClassification("peon")
+        ..setNormalAbilities(commaList(AbilityIds.invulnerable, CARGO_HOLD_ID, CARGO_LOAD_ID, CARGO_UNLOAD_ID))
+        ..setAnimationBlendTimeseconds(0)
+        ..setAnimationCastBackswing(0)
+        ..setAnimationCastPoint(0)
+
+    new AbilityDefinitionCargoHoldShip(CARGO_HOLD_ID)
+        ..setCastRange(1, 100000)
+        ..setEffectSound("")
+
+    new AbilityDefinitionLoadNavies(CARGO_LOAD_ID)
+        ..setCastRange(1, 100000)
+        ..setEffectSound("")
+        
+    new AbilityDefinition(CARGO_UNLOAD_ID, 'Sdro')
+        ..setCastRange(1, 100000)
+        ..setEffectSound("")

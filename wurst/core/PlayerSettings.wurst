@@ -1,9 +1,6 @@
 package PlayerSettings
 
-import Persistable
-import YPrinting
-import LocalFiles
-import ClosureTimers
+import initlater YARP
 
 public class PlayerSettings extends Persistable
     private static thistype array lookup
@@ -19,7 +16,7 @@ public class PlayerSettings extends Persistable
         lookup[owner.getId()] = this
 
     override function getClassId() returns string
-        return "yarp-settings"
+        return "settings"
 
     override function getId() returns string
         return "local"
@@ -35,13 +32,15 @@ public class PlayerSettings extends Persistable
                 case FAIL_FILE_CORRUPT
                     YPrint.warn("Your settings file has been corrupted and will be overwritten.")
                 case FAIL_DESERIALIZE
-                    this.save()
                     YPrint.info("Your settings have been successfully initialized!")
                     YPrint.info("You are also able to load builds.")
                 case FAIL_NO_PLAYER
                 case SUCCESS
                     YPrint.info("Your settings have been successfully loaded!")
                     YPrint.info("You are also able to load builds.")
+
+        if status == LoadStatus.FAIL_FILE_CORRUPT or status == LoadStatus.FAIL_DESERIALIZE
+            save()
         applySettings()
 
     override function onSaved()
@@ -79,35 +78,45 @@ public class PlayerSettings extends Persistable
         preferredName = buffer.readString()
 
     function enablePreferredName(string name)
-        this.preferredName = name
+        preferredName = name
         applySettings()
         save()
 
     function disablePreferredName()
-        this.preferredName = ""
+        preferredName = ""
         applySettings()
         save()
 
     function enablePreferredNameColor(color c)
-        this.preferredNameColor = c
-        this.preferredNameColorEnabled = true
+        preferredNameColor = c
+        preferredNameColorEnabled = true
         applySettings()
         save()
 
     function disablePreferredNameColor()
-        this.preferredNameColorEnabled = false
+        preferredNameColorEnabled = false
         applySettings()
         save()
 
     function enablePreferredColor(playercolor pc)
-        this.preferredPlayerColor = pc.toInt()
+        preferredPlayerColor = pc.toInt()
         applySettings()
         save()
 
     function disablePreferredColor()
-        this.preferredPlayerColor = -1
+        preferredPlayerColor = -1
         applySettings()
         save()
+
+    function getColor() returns color
+        color col
+
+        if preferredNameColorEnabled
+            col = preferredNameColor
+        else
+            col = owner.getColor().toColor()
+
+        return col
 
     function applySettings()
         if preferredPlayerColor >= 0
@@ -124,9 +133,18 @@ public class PlayerSettings extends Persistable
 
     static function get(player owner) returns thistype
         return lookup[owner.getId()]
+
+public function player.getSettings() returns PlayerSettings
+    return PlayerSettings.get(this)
+
+public function player.getRealColor() returns color
+    return this.getSettings().getColor()
+
+public function player.getNameRealColored() returns string
+    return this.getRealColor().toColorString() + this.getName() + "|r"
             
 init
-    doAfter(1) ->
+    LocalFiles.registerLocalFilesChecked() ->
         for i = 0 to bj_MAX_PLAYERS - 1
             let settings = new PlayerSettings(players[i])
             settings.load()

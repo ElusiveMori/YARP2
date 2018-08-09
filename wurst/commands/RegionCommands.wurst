@@ -1,0 +1,40 @@
+package RegionCommands
+
+import initlater YARP
+
+init
+    SimpleCommand.register("region") (context, arguments) ->
+        let command = arguments.getString(1)
+        let owner = context.owner()
+
+        RegionSpecifier regionSpecifier = null
+
+        for what in context.selection()
+            let specifier = what.toRegionSpecifier()
+            if what.isAccessibleBy(owner) and specifier != null
+                regionSpecifier = specifier
+                break
+        
+        switch command
+            case ""
+                print(owner.getSpawner().getName())
+                new RegionSpecifier(owner, owner.getSpawner().getPos())
+            case "width"
+                if regionSpecifier != null
+                    regionSpecifier.setWidth(128. + 256. * arguments.getInt(2))
+            case "height"
+                if regionSpecifier != null
+                    regionSpecifier.setHeight(128. + 256. * arguments.getInt(2))
+            case "tile"
+                if regionSpecifier != null
+                    let iter = regionSpecifier.area().tileIterator()
+                    let tileId = arguments.getString(2).fromRawCode()
+                    for tile from iter
+                        tile.setType(tileId)
+                    destroy iter
+            case "save"
+                let data = new RegionSaveData(owner, arguments.getString(2))
+                data.startSave(regionSpecifier.area())
+            case "load"
+                let data = new RegionSaveData(owner, arguments.getString(2))
+                data.startLoad(regionSpecifier.getUnit().getPos())

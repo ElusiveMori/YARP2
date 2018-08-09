@@ -1,6 +1,19 @@
 // Simple GMSI script to groom stock units and abilities 
 
-void PrepareStock() {
+echoln("Starting YARP initialization script.\n
+This script is meant to install YARP required technical units into the map, 
+as well as create buildings and builder units, and set up other things.");
+
+include("dialog.gsl");
+include("objects.gsl");
+include("io.gsl");
+include("common.gsl");
+include("string.gsl");
+
+string fn = fileDialog("Choose a map", @inputPath, ".w3x");
+Map map = loadMap(fn, true, true);
+
+void PrepareStock(Map map) {
 	for (string i: map.objects) {
 		// remove all custom objects
 		if (isIdCustom(i)) {
@@ -115,3 +128,6 @@ void PrepareStock() {
 		}
 	}
 }
+
+PrepareStock(map);
+saveMap(map, @outputPath + "/" + map.fileName);

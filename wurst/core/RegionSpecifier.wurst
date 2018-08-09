@@ -1,0 +1,150 @@
+package RegionSpecifier
+
+import initlater YARP
+
+public constant REGION_SPECIFIER_ID = compiletime(UNIT_ID_GEN.next())
+
+public class RegionSpecifier
+    protected static thistype array lookup
+
+    private unit what
+    private rect area
+
+    private lightning horizTop = AddLightning(LIGHTNING_DRAIN_MANA, false, 0, 0, 0, 0)
+    private lightning horizBot = AddLightning(LIGHTNING_DRAIN_MANA, false, 0, 0, 0, 0)
+    private lightning vertLeft = AddLightning(LIGHTNING_DRAIN_MANA, false, 0, 0, 0, 0)
+    private lightning vertRight = AddLightning(LIGHTNING_DRAIN_MANA, false, 0, 0, 0, 0)
+
+    construct(player owner, vec2 pos)
+        print(pos.x)
+        print(pos.y)
+        what = createUnit(owner, REGION_SPECIFIER_ID, pos, angle(0))
+        lookup[what.getIndex()] = this
+
+        snap()
+        area = Rect(what.getX() - 64, what.getY() - 64, what.getX() + 64, what.getY() + 64)
+
+        setHintLinesColor(colorA(0, 0, 0, 0))
+    
+    ondestroy
+        lookup[what.getIndex()] = null
+        what.remove()
+        area.remove()
+        horizTop.destr()
+        horizBot.destr()
+        vertLeft.destr()
+        vertRight.destr()
+
+    function addWidth(real amount)
+        setWidth(area.width() + amount)
+
+    function addHeight(real amount)
+        setHeight(area.height() + amount)
+
+    function setWidth(real amount)
+        area.resize(area.getLeftBot(), area.getLeftTop() + vec2(amount, 0))
+        snap()
+        updateHintLines()
+
+    function setHeight(real amount)
+        area.resize(area.getLeftBot(), area.getRightBot() + vec2(0, amount))
+        snap()
+        updateHintLines()
+
+    function area() returns rect
+        return area
+
+    function getUnit() returns unit
+        return what
+
+    private function snap()
+        let pos = what.getPos().toTileCenter()
+        what.setPos(pos)
+        area.moveTo(pos)
+
+    private function setHintLinesColor(colorA col)
+        horizTop.setColor(col)
+        horizBot.setColor(col)
+        vertLeft.setColor(col)
+        vertRight.setColor(col)
+
+    private function updateHintLines()
+        if localPlayer == what.getOwner()
+            horizTop.move(false, area.getLeftTop(), area.getRightTop())
+            horizBot.move(false, area.getLeftBot(), area.getRightBot())
+            vertLeft.move(false, area.getLeftTop(), area.getLeftBot())
+            vertRight.move(false, area.getRightTop(), area.getRightBot())
+    
+    protected function onSelected()
+        if localPlayer == what.getOwner()
+            setHintLinesColor(colorA(255, 255, 255, 255))
+
+    protected function onDeselected()
+        if localPlayer == what.getOwner()
+            setHintLinesColor(colorA(0, 0, 0, 0))
+
+    protected function onPointOrder()
+        let order = GetIssuedOrderId()
+
+        if order == Orders.smart or order == Orders.move
+            what.setPos(getOrderPos())
+        
+        snap()
+        updateHintLines()
+
+        nullTimer() ->
+            what.issueImmediateOrder("stop")
+
+public function unit.toRegionSpecifier() returns RegionSpecifier
+    return RegionSpecifier.lookup[this.getIndex()]
+
+init
+    EventListener.add(EVENT_PLAYER_UNIT_SELECTED) ->
+        let specifier = GetTriggerUnit().toRegionSpecifier()
+
+        if specifier != null
+            specifier.onSelected()
+
+    EventListener.add(EVENT_PLAYER_UNIT_DESELECTED) ->
+        let specifier = GetTriggerUnit().toRegionSpecifier()
+
+        if specifier != null
+            specifier.onDeselected()
+
+    EventListener.add(EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER) ->
+        let specifier = GetTriggerUnit().toRegionSpecifier()
+
+        if specifier != null
+            specifier.onPointOrder()
+        
+@compiletime function generateRegionSpecifier()
+    new UnitDefinition(REGION_SPECIFIER_ID, 'hfoo')
+        ..setName("Region Specifier")
+        ..setMovementHeight(0)
+        ..setSpeedBase(1)
+        ..setTurnRate(3)
+        ..setMovementType(MovementType.Fly)
+        ..setUpgradesUsed("")
+        ..setHitPointsMaximumBase(100)
+        ..setSightRadiusDay(1500)
+        ..setSightRadiusNight(1500)
+        ..setCollisionSize(0)
+        ..setUnitSoundSet("")
+        ..setIconGameInterface("ReplaceableTextures\\WorldEditUI\\StartingLocation.blp")
+        ..setMaximumPitchAngledegrees(0)
+        ..setMaximumRollAngledegrees(0)
+        ..setModelFile("Objects\\StartLocation\\StartLocation.mdl")
+        ..setScalingValue(0.25)
+        ..setSelectionScale(1.5)
+        ..setShadowImageUnit("")
+        ..setAttacksEnabled(0)
+        ..setDefenseUpgradeBonus(0)
+        ..setDefenseBase(0)
+        ..setArmorType(ArmorType.Divine)
+        ..setTooltipBasic("")
+        ..setTooltipExtended("This is a region specifier.")
+        ..setUnitClassification("peon")
+        ..setNormalAbilities(commaList(AbilityIds.invulnerable))
+        ..setAnimationBlendTimeseconds(0)
+        ..setAnimationCastBackswing(0)
+        ..setAnimationCastPoint(0)

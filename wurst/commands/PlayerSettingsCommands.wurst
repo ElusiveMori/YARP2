@@ -1,8 +1,6 @@
 package PlayerSettingsCommands
 
-import CommandWrappers
-import PlayerSettings
-import ColorUtil
+import initlater YARP
 
 init
     SimpleCommand.register("setting") (context, arguments) ->

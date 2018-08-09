@@ -1,8 +1,6 @@
 package Scripting
 
-import HashMap
-import GameTimer
-import LinkedList
+import initlater YARP
 
 let operatorArity = new HashMap<int, int>
 let operators = new HashMap<int, Op>

@@ -1,0 +1,52 @@
+package MiscInit
+
+import initlater YARP
+
+function initNeutrals()
+    let neutral = players[bj_PLAYER_NEUTRAL_EXTRA]
+    for i = 0 to bj_MAX_PLAYERS - 1
+        let who = players[i]
+        SetPlayerAllianceStateBJ(who, neutral, bj_ALLIANCE_ALLIED_ADVUNITS)
+        SetPlayerAllianceStateBJ(neutral, who, bj_ALLIANCE_ALLIED_ADVUNITS)
+
+function initChat()
+    EventListener.add(EVENT_PLAYER_CHAT_FILTER) () ->
+        let who = GetTriggerPlayer()
+        let chatString = GetEventPlayerChatString()
+
+        let success = try() ->
+            who.executor().execute(chatString)
+
+        if not success
+            Log.warn("Command [" + chatString + "] by player " + who.getNameColored() + " has crashed.")
+            Log.warn("Error: " + lastError)
+    
+function initPlayerLeave()
+    registerPlayerEvent(EVENT_PLAYER_LEAVE, null) () ->
+        let who = GetTriggerPlayer()
+        YPrint.info("Player " + who.getNameRealColored() + " has left the game.")
+
+function initPlayerAlliances()
+    for i = 0 to bj_MAX_PLAYERS
+        for j = 0 to bj_MAX_PLAYERS
+            if i != j
+                let source = players[i]
+                let target = players[j]
+                source.setPlayerAlliance(target, ALLIANCE_PASSIVE, true)
+                source.setPlayerAlliance(target, ALLIANCE_SHARED_VISION, true)
+                source.setPlayerAlliance(target, ALLIANCE_SHARED_SPELLS, true)
+
+                source.setPlayerAlliance(target, ALLIANCE_HELP_REQUEST, false)
+                source.setPlayerAlliance(target, ALLIANCE_HELP_RESPONSE, false)
+                source.setPlayerAlliance(target, ALLIANCE_SHARED_XP, false)
+                source.setPlayerAlliance(target, ALLIANCE_SHARED_CONTROL, false)
+                source.setPlayerAlliance(target, ALLIANCE_SHARED_ADVANCED_CONTROL, false)
+                source.setPlayerAlliance(target, ALLIANCE_RESCUABLE, false)
+                source.setPlayerAlliance(target, ALLIANCE_SHARED_VISION_FORCED, false)
+
+init
+    initNeutrals()
+    initChat()
+    initPlayerLeave()
+    initPlayerAlliances()
+    placeShops(0, 0)

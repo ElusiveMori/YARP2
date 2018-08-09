@@ -1,4 +1,7 @@
-package Parser
+package Parsers
+
+import StringUtils
+import Execute
 
 /*
 	YARP features a fairly basic, but agile command syntax that
@@ -181,6 +184,61 @@ public class WhitespaceParser extends BaseParser
 
 		this.pos = pos + 1
 		return input.substring(start, pos)
+
+/**
+	A parser that splits the source string based on width.
+**/
+public class LineSplitterParser extends BaseParser
+	private int maxWidth
+	private string result
+
+	construct(string input, int maxWidth)
+		super(input)
+		this.maxWidth = maxWidth
+
+	override function nextToken() returns string
+		var pos = this.pos
+		var start = pos
+		var lastWordEnd = pos
+		var width = 0
+
+		let input = this.input
+		let maxWidth = this.maxWidth
+		let length = input.length()
+
+		while pos < length
+			let curSymbol = input.charAt(pos)
+			let curChar = curSymbol.toChar()
+			width += curChar.getWidth()
+
+			if curSymbol == " "
+				lastWordEnd = pos
+
+			if width > maxWidth and lastWordEnd != start
+				this.pos = lastWordEnd + 1
+				return input.substring(start, lastWordEnd)
+
+			pos++
+
+		this.pos = pos
+		return input.substring(start, pos)
+
+	/**
+		Consumes this parser and returns a string with newlines inserted based on width.
+	**/
+	function process() returns string
+		execute() ->
+			var lastToken = nextToken()
+			result = lastToken
+
+			while lastToken != ""
+				lastToken = nextToken()
+				if lastToken != ""
+					result += "\n" + lastToken
+					
+		let finalResult = this.result
+		destroy this
+		return finalResult
 
 @test
 function testArgumentParser()

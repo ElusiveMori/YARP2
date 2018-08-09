@@ -1,0 +1,88 @@
+package CodegenUtils
+
+import public UnitObjEditing
+import public ObjectIdGenerator
+import public ObjectIds
+import public HashMap
+import public HashSet
+
+public constant UNIT_TIP_COLOR = "|c00eac690"
+
+public class CodegenUtils
+    static function baseUnit(int id, int baseId) returns UnitOrBuildingOrHeroDefinition
+        return new UnitOrBuildingOrHeroDefinition(id, baseId)
+        ..setHitPointsMaximumBase(128)
+        ..setHitPointsRegenerationRate(0)
+        ..setManaMaximum(128)
+        ..setManaInitialAmount(128)
+        ..setManaRegeneration(0)
+
+        ..setNormalAbilities("")
+        ..setUpgradesUsed("")
+        
+        ..setSpeedBase(256)
+        ..setTurnRate(1)
+       
+        ..setStockMaximum(1)
+        ..setStockReplenishInterval(0)
+        ..setStockStartDelay(0)
+
+        ..setUnitSoundSet("")
+        ..setTooltipBasic("")
+        ..setTooltipExtended("")
+
+        ..setShadowImageUnit("")
+        ..setShadowTextureBuilding("")
+
+        ..setElevationSamplePoints(4)
+        ..setElevationSampleRadius(50)
+        ..setMaximumPitchAngledegrees(0)
+        ..setMaximumRollAngledegrees(0)
+
+        ..setRepairTime(0)
+        ..setRepairGoldCost(0)
+        ..setRepairLumberCost(0)
+        ..setFoodCost(0)
+        ..setGoldCost(0)
+        ..setLumberCost(0)
+
+        ..setGoldBountyAwardedBase(0)
+        ..setGoldBountyAwardedNumberofDice(0)
+        ..setGoldBountyAwardedSidesperDie(0)
+
+    static function customUnit(int id, string modelFile, string name) returns UnitDefinition
+        return (baseUnit(id, 'hfoo') castTo UnitDefinition)
+            ..setLevel(0)
+        
+            ..setAnimationWalkSpeed(256)
+            ..setAnimationRunSpeed(256)
+            
+            ..setAnimationCastBackswing(0.5)
+            ..setAttack1AnimationBackswingPoint(0.5)
+            ..setAttack1AnimationDamagePoint(0.5)
+            ..setAttack1CooldownTime(1)
+            ..setAttack1DamageBase(4)
+            ..setAttack1DamageNumberofDice(1)
+            ..setAttack1DamageSidesperDie(1)
+
+            ..setModelFile(modelFile)
+            ..setName(name)
+            ..setTooltipBasic(UNIT_TIP_COLOR + name + "|r")
+            
+    static function customBuilding(int id, string modelFile, string name) returns BuildingDefinition
+        return (baseUnit(id, 'ncrb') castTo BuildingDefinition)
+            ..setIsaBuilding(true)
+            ..setSpeedBase(0)
+            ..setManaMaximum(0)
+            ..setPlacementPreventedBy("")
+            ..setUnitClassification("mechanical,summoned")
+            ..setMovementType(MovementType.None)
+
+            ..setModelFile(modelFile)
+            ..setName(name)
+            ..setTooltipBasic(UNIT_TIP_COLOR + name + "|r")
+
+    static function unitShop(int id, string modelFile, string name, string units) returns BuildingDefinition
+        return customBuilding(id, modelFile, name)
+            ..setUnitsSold(units)
+            ..setNormalAbilities("Avul")

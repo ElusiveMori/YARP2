@@ -8,6 +8,7 @@ function c(string name, int id)
     colors.put(name.getHash(), id)
 
 function registerColors()
+    // original colors
     c("red", 0)
     c("blue", 1)
     c("teal", 2)
@@ -24,6 +25,8 @@ function registerColors()
     c("darkgreen", 10)
     c("dg", 10)
     c("brown", 11)
+
+    // new colors
     c("maroon", 12)
     c("navy", 13)
     c("turquoise", 14)
@@ -37,6 +40,23 @@ function registerColors()
     c("emerald", 22)
     c("peanut", 23)
     c("black", 24)
+
+    // new colors alternate names
+    c("red2", 12)
+    c("blue2", 13)
+    c("teal2", 14)
+    c("purple2", 15)
+    c("yellow2", 16)
+    c("orange2", 17)
+    c("green2", 18)
+    c("pink2", 19)
+    c("gray2", 20)
+    c("white", 21)
+    c("lightblue2", 21)
+    c("lb2", 21)
+    c("darkgreen2", 22)
+    c("dg2", 22)
+    c("brown2", 23)
 
 public function getColorFromString(string name) returns playercolor
     let hash = name.getHash()
