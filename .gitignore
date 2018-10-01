@@ -2,3 +2,4 @@
 /.vs
 /.vscode
 wurst.dependencies
+wurst_run\.args
