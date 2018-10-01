@@ -2,23 +2,168 @@ package UnitData
 
 import YARP
 
-class SingleUnitData implements BufferSerializable
-    override function serialize(Buffer buffer)
-    override function deserialize(Buffer buffer)
+constant CUSTOM_HERO_NAME_FLAG = 0
+constant CUSTOM_NAME_FLAG = 1
+constant CUSTOM_MAX_LIFE_FLAG = 2
+constant CUSTOM_MAX_MANA_FLAG = 3
+constant CUSTOM_DAMAGE_FLAG = 4
+constant CUSTOM_ATTACK_COOLDOWN_FLAG = 5
+constant CUSTOM_FLY_HEIGHT_FLAG = 6
+constant CUSTOM_TINT_FLAG = 7
 
-class MultipleUnitData implements BufferSerializable
+class SingleUnitData implements DataSerializable
+    private yunit what
+    private vec2 pos
+    private int id
+
+    private bitset flags
+
+    private string customHeroName
+    private string customName
+
+    private int playerColorId
+    private colorA tint
+
+    private real size
+    private real flyHeight
+
+    private int maxMana
+    private int maxLife
+
+    private int damage
+    private real attackCooldown
+
+    private function serializeMandatory(DataWriter writer)
+        writer.writeString(what.getUid())
+        writer.writeReal(what.u.getX())
+        writer.writeReal(what.u.getY())
+
+        writer.writeByte(what.getColor().toInt())
+        writer.writeReal(what.getScale())
+
+    private function serializeOptionals(DataWriter writer)
+        var flags = bitset(0)
+        if what.hasCustomName()
+            flags = flags.add(CUSTOM_NAME_FLAG)
+        
+        if what.hasCustomHeroName()
+            flags = flags.add(CUSTOM_HERO_NAME_FLAG)
+
+        if what.hasCustomMaxLife()
+            flags = flags.add(CUSTOM_MAX_LIFE_FLAG)
+
+        if what.hasCustomMaxMana()
+            flags = flags.add(CUSTOM_MAX_MANA_FLAG)
+
+        if what.hasCustomDamage()
+            flags = flags.add(CUSTOM_DAMAGE_FLAG)
+
+        if what.hasCustomAttackCooldown()
+            flags = flags.add(CUSTOM_ATTACK_COOLDOWN_FLAG)
+
+        if what.hasCustomFlyHeight()
+            flags = flags.add(CUSTOM_FLY_HEIGHT_FLAG)
+
+        if what.hasCustomTint()
+            flags = flags.add(CUSTOM_TINT_FLAG)
+
+        writer.writeInt(flags.val)
+
+        if what.hasCustomName()
+            writer.writeString(what.getName())
+        
+        if what.hasCustomHeroName()
+            writer.writeString(what.getHeroName())
+
+        if what.hasCustomMaxLife()
+            writer.writeInt(what.getMaxLife().toInt())
+
+        if what.hasCustomMaxMana()
+            writer.writeInt(what.getMaxMana().toInt())
+
+        if what.hasCustomDamage()
+            writer.writeInt(what.getDamage())
+
+        if what.hasCustomAttackCooldown()
+            writer.writeReal(what.getAttackCooldown())
+
+        if what.hasCustomFlyHeight()
+            writer.writeReal(what.getHeight())
+
+        if what.hasCustomTint()
+            let tint = what.getTint()
+            writer.writeByte(tint.red)
+            writer.writeByte(tint.green)
+            writer.writeByte(tint.blue)
+            writer.writeByte(tint.alpha)
+
+    override function serialize(DataWriter writer)
+        serializeMandatory(writer)
+        serializeOptionals(writer)
+
+    private function deserializeMandatory(DataReader reader)
+        id = getIdForUid(reader.readString())
+        pos = vec2(reader.readReal(), reader.readReal())
+        playerColorId = reader.readByte()
+        size = reader.readReal()
+
+    private function deserializeOptionals(DataReader reader)
+        let flags = bitset(reader.readInt())
+
+        if flags.contains(CUSTOM_NAME_FLAG)
+            customName = reader.readString()
+        
+        if flags.contains(CUSTOM_HERO_NAME_FLAG)
+            customHeroName = reader.readString()
+
+        if flags.contains(CUSTOM_MAX_LIFE_FLAG)
+            maxLife = reader.readInt()
+
+        if flags.contains(CUSTOM_MAX_MANA_FLAG)
+            maxMana = reader.readInt()
+
+        if flags.contains(CUSTOM_DAMAGE_FLAG)
+            damage = reader.readInt()
+
+        if flags.contains(CUSTOM_ATTACK_COOLDOWN_FLAG)
+            attackCooldown = reader.readReal()
+
+        if flags.contains(CUSTOM_FLY_HEIGHT_FLAG)
+            flyHeight = reader.readReal()
+
+        if flags.contains(CUSTOM_TINT_FLAG)
+            tint = colorA(
+                reader.readByte(),
+                reader.readByte(),
+                reader.readByte(),
+                reader.readByte()
+            )
+
+        this.flags = flags
+
+    override function deserialize(DataReader reader)
+        deserializeMandatory(reader)
+        deserializeOptionals(reader)
+
+    function apply(rect area, player owner)
+        let what = createUnit(owner, id, vec2(0, 0), angle(0))
+
+        what.setPos(pos)
+
+
+class MultipleUnitData implements DataSerializable
     private let list = new HashList<SingleUnitData>
 
-    override function serialize(Buffer buffer)
-        buffer.writeInt(list.size())
+    override function serialize(DataWriter writer)
+        writer.writeInt(list.size())
 
         for data in list
-            data.serialize(buffer)
+            data.serialize(writer)
 
-    override function deserialize(Buffer buffer)
-        let size = buffer.readInt()
+    override function deserialize(DataReader reader)
+        let size = reader.readInt()
 
         for i = 0 to size - 1
             let data = new SingleUnitData
-            data.deserialize(buffer)
+            data.deserialize(reader)
             list.add(data)

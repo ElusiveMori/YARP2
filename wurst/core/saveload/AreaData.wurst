@@ -23,7 +23,7 @@ class TerrainCell
 
         return val
 
-class TerrainData implements BufferSerializable
+class TerrainData implements DataSerializable
     private let tileMap = new IterableMap<char, int>
     private let cellList = new LinkedList<TerrainCell>
 
@@ -80,30 +80,30 @@ class TerrainData implements BufferSerializable
         destroy iter
         destroy tileMapInverted
 
-    override function serialize(Buffer buffer)
-        buffer.writeInt(tileMap.size())
+    override function serialize(DataWriter writer)
+        writer.writeByte(tileMap.size())
         for key in tileMap
-            let val = tileMap.get(key).toRawCode()
-            buffer.writeString(key.toString())
-            buffer.writeString(val)
+            let val = tileMap.get(key)
+            writer.writeByte(key.toInt())
+            writer.writeInt(val)
         
-        buffer.writeInt(cellList.size())
+        writer.writeShort(cellList.size())
         for cell in cellList
-            buffer.writeString(cell.data)
+            writer.writeString(cell.data)
 
-    override function deserialize(Buffer buffer)
-        var count = buffer.readInt()
+    override function deserialize(DataReader reader)
+        var count = reader.readByte()
         for i = 1 to count
-            let key = buffer.readString()
-            let val = buffer.readString()
-            tileMap.put(char(key), val.fromRawCode())
+            let key = reader.readByte()
+            let val = reader.readInt()
+            tileMap.put(char(key), val)
 
-        count = buffer.readInt()
+        count = reader.readShort()
         for i = 1 to count
-            let cell = buffer.readString()
+            let cell = reader.readString()
             cellList.push(new TerrainCell(cell))
 
-public class AreaData implements BufferSerializable
+public class AreaData implements DataSerializable
     private TerrainData terrain
 
     construct()
@@ -112,11 +112,11 @@ public class AreaData implements BufferSerializable
     ondestroy
         destroy terrain
 
-    override function serialize(Buffer buffer)
-        terrain.serialize(buffer)
+    override function serialize(DataWriter writer)
+        terrain.serialize(writer)
 
-    override function deserialize(Buffer buffer)
-        terrain.deserialize(buffer)
+    override function deserialize(DataReader reader)
+        terrain.deserialize(reader)
 
     function scan(rect area)
         terrain.scan(area)

@@ -5,6 +5,7 @@ import public ObjectIdGenerator
 import public ObjectIds
 import public HashMap
 import public HashSet
+import public Table
 
 public constant UNIT_TIP_COLOR = "|c00eac690"
 

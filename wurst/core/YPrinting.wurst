@@ -30,3 +30,19 @@ public class YPrint
 
     static function hint(string message)
         printTimed(HINT_PREFIX + message, MESSAGE_DURATION)
+
+    static function info(player who, string message)
+        if localPlayer == who
+            printTimed(MESSAGE_PREFIX + message, MESSAGE_DURATION)
+
+    static function warn(player who, string message)
+        if localPlayer == who
+            printTimed(WARNING_PREFIX + message, MESSAGE_DURATION)
+
+    static function debug(player who, string message)
+        if localPlayer == who
+            printTimed(DEBUG_PREFIX + message, MESSAGE_DURATION)
+
+    static function hint(player who, string message)
+        if localPlayer == who
+            printTimed(HINT_PREFIX + message, MESSAGE_DURATION)

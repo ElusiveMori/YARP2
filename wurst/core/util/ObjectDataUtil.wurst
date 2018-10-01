@@ -1,0 +1,10 @@
+package ObjectDataUtil
+
+import ObjectIds
+
+public function getObjectDataField(int objectId, string field) returns string
+    let original = BlzGetAbilityExtendedTooltip('Amls', 1)
+    BlzSetAbilityExtendedTooltip('Amls', "<" + objectId.toRawCode() + "," + field + ">", 1)
+    let output = BlzGetAbilityExtendedTooltip('Amls', 1)
+    BlzSetAbilityExtendedTooltip('Amls', original, 1)
+    return output

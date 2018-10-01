@@ -6,3 +6,19 @@ public function player.selectedUnitsList() returns LinkedList<unit>
     let list = new LinkedList<unit>
     forUnitsSelected(this, (unit u) -> list.add(u))
     return list
+
+public function player.deselectAll()
+    let list = this.selectedUnitsList()
+    if localPlayer == this
+    for what in list
+        SelectUnit(what, false)
+    destroy list
+
+public function player.selectUnit(unit what)
+    if localPlayer == this
+        SelectUnit(what, true)
+    
+public function player.selectSingleUnit(unit what)
+    this.deselectAll()
+    this.selectUnit(what)
+    

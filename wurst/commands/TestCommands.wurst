@@ -2,6 +2,7 @@ package TestCommands
 
 import initlater YARP
 
+import PacketIO
 class Box<T>
     T v
 
@@ -78,3 +79,57 @@ init
                 BlzSetAbilityTooltip('Aabs', "asdfghj", 0)
                 box.v++
         print(box.v)
+
+    SimpleCommand.register("blend") (context, arguments) ->
+        if arguments.getInt(1) == 1
+            globalBlend = BLEND_MODE_MODULATE_2X
+        else
+            globalBlend = BLEND_MODE_MODULATE
+
+    SimpleCommand.register("modulate") (context, arguments) ->
+        globalModulateColor = colorA(
+            0 .lerp(arguments.getReal(1), 255).toInt(), 
+            0 .lerp(arguments.getReal(2), 255).toInt(), 
+            0 .lerp(arguments.getReal(3), 255).toInt(), 
+            0 .lerp(arguments.getReal(4), 255).toInt())
+
+    SimpleCommand.register("time") (context, arguments) ->
+        SetTimeOfDay(arguments.getReal(1))
+
+    SimpleCommand.register("fail") (context, arguments) ->
+        execute() ->
+            error("fail")
+
+    SimpleCommand.register("testnetwork") (context, arguments) ->
+        let network = new Network(context.owner())
+        network.start() (status, buffer) ->
+            print("network!")
+
+    SimpleCommand.register("getdata") (context, arguments) ->
+        print(getObjectDataField(arguments.getString(1).fromRawCode(), arguments.getString(2)))
+
+    SimpleCommand.register("preloadtest") (context, arguments) ->
+        execute() ->
+            var s = "AAAAAAAAAAAAA"
+
+            for i = s.length() downto 1
+                PreloadGenClear()
+                PreloadGenStart()
+                Preload(s)
+                PreloadGenEnd("lengthtest/preloadtest" + i.toString() + ".pld")
+                s = s.substring(1)
+
+    SimpleCommand.register("iotest") (context, arguments) ->
+        var s = ""
+        var c = 1
+        let l = arguments.getInt(1)
+        for i = 1 to l
+            s += (c mod 10).toString()
+            c++
+        PacketWriter.initialize()
+        PacketWriter.write(s)
+        PacketWriter.commit("iotest.pld")
+        PacketReader.open("iotest.pld")
+        
+    SimpleCommand.register("file") (context, arguments) ->
+        PacketReader.open(arguments.getString(1))

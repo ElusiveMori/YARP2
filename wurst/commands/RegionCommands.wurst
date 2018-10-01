@@ -17,7 +17,6 @@ init
         
         switch command
             case ""
-                print(owner.getSpawner().getName())
                 new RegionSpecifier(owner, owner.getSpawner().getPos())
             case "width"
                 if regionSpecifier != null
@@ -37,4 +36,32 @@ init
                 data.startSave(regionSpecifier.area())
             case "load"
                 let data = new RegionSaveData(owner, arguments.getString(2))
-                data.startLoad(regionSpecifier.getUnit().getPos())
+                data.startLoad() (_) ->
+                    if not data.isValid()
+                        YPrint.warn("Your save has failed to load.")
+                        destroy data
+                    let specifier = new RegionSpecifier(owner, data.getOrigin())
+                    specifier.setWidth(data.getWidth())
+                    specifier.setHeight(data.getHeight())
+                    specifier.initLoad(data)
+                    if localPlayer == owner
+                        setCameraPosition(data.getOrigin())
+                    owner.selectSingleUnit(specifier.getUnit())
+            case "fog"
+                let subcommand = arguments.getString(2)
+                var fog = regionSpecifier.getFog()
+                fog.state = true
+                switch subcommand
+                    case "off"
+                        fog.state = false
+                    case "color"
+                        fog.r = arguments.getReal(3)
+                        fog.g = arguments.getReal(4)
+                        fog.b = arguments.getReal(5)
+                    case "start"
+                        fog.min = arguments.getReal(3)
+                    case "end"
+                        fog.max = arguments.getReal(3)
+                regionSpecifier.setFog(fog)
+                        
+                        

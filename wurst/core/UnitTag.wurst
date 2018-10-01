@@ -163,12 +163,13 @@ public class UnitTag
                 iter.remove()
 
         forUnitsInRect(cullRect) (unit what) ->
-            let tag = getFromUnit(what)
-            if tag != null
-                tag.update()
-                if tag.tag == null and tag.shown
-                    tag.enable()
-                    currentlyVisible.push(tag)
+            if not what.isSpecial()
+                let tag = getFromUnit(what)
+                if tag != null
+                    tag.update()
+                    if tag.tag == null and tag.shown
+                        tag.enable()
+                        currentlyVisible.push(tag)
 
 class TextTagUpdater
     use LinkedListModule

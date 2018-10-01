@@ -15,6 +15,9 @@ function y(yunit what) returns YUnitData
 **/
 public tuple yunit(unit u)
 
+public function yunit.getUid() returns string
+    return getUidForId(this.u.getTypeId())
+
 public function yunit.remove()
     this.u.remove()
 
@@ -58,11 +61,22 @@ public function yunit.setHeight(real height)
     this.fly()
     y(this).flyHeight = height
     this.u.setFlyHeight(height, 10000000)
+    y(this).hasCustomFlyHeight = true
 
 public function yunit.getHeight() returns real
     return y(this).flyHeight
 
+public function yunit.hasCustomFlyHeight() returns boolean
+    return y(this).hasCustomFlyHeight
+
+public function yunit.hasCustomName() returns boolean
+    return y(this).hasCustomName
+
+public function yunit.hasCustomHeroName() returns boolean
+    return y(this).hasCustomHeroName
+
 public function yunit.setName(string name)
+    y(this).hasCustomName = true
     y(this).tag.info.setName(name)
     this.u.setName(name)
 
@@ -70,6 +84,7 @@ public function yunit.getName() returns string
     return this.u.getName()
 
 public function yunit.setHeroName(string name)
+    y(this).hasCustomHeroName = true
     this.u.setProperName(name)
 
 public function yunit.getHeroName() returns string
@@ -78,9 +93,13 @@ public function yunit.getHeroName() returns string
 public function yunit.setTint(colorA tint)
     this.u.setVertexColor(tint)
     y(this).tint = tint
+    y(this).hasCustomTint = true
 
 public function yunit.getTint() returns colorA
     return y(this).tint
+
+public function yunit.hasCustomTint() returns boolean
+    return y(this).hasCustomTint
 
 public function yunit.getTag() returns UnitTag
     return y(this).tag
@@ -99,10 +118,14 @@ public function yunit.getLife() returns real
     return this.u.getLife()
 
 public function yunit.setMaxLife(int life)
+    y(this).hasCustomMaxLife = true
     this.u.setMaxHP(life)
 
 public function yunit.getMaxLife() returns real
     return this.u.getMaxHP()
+
+public function yunit.hasCustomMaxLife() returns boolean
+    return y(this).hasCustomMaxLife
 
 public function yunit.setMana(real life)
     this.u.setMana(life)
@@ -111,10 +134,40 @@ public function yunit.getMana() returns real
     return this.u.getMana()
 
 public function yunit.setMaxMana(int life)
+    y(this).hasCustomMaxMana = true
     this.u.setMaxMana(life)
 
 public function yunit.getMaxMana() returns real
     return this.u.getMaxMana()
+
+public function yunit.hasCustomMaxMana() returns boolean
+    return y(this).hasCustomMaxMana
+
+public function yunit.setDamage(int damage)
+    y(this).hasCustomDamage = true
+    this.u.setBaseDamage(damage, 0)
+
+public function yunit.getDamage() returns int
+    return this.u.getBaseDamage(0)
+
+public function yunit.hasCustomDamage() returns boolean
+    return y(this).hasCustomDamage
+
+public function yunit.setAttackCooldown(real cooldown)
+    y(this).hasCustomAttackCooldown = true
+    this.u.setAttackCooldown(cooldown, 0)
+
+public function yunit.getAttackCooldown() returns real
+    return this.u.getAttackCooldown(0)
+
+public function yunit.hasCustomAttackCooldown() returns boolean
+    return y(this).hasCustomAttackCooldown
+
+public function yunit.setSimpleFormation(SimpleFormationData simpleFormation)
+    y(this).simpleFormation = simpleFormation
+
+public function yunit.getSimpleFormation() returns SimpleFormationData
+    return y(this).simpleFormation
 
 class YUnitData
     unit what
@@ -125,6 +178,15 @@ class YUnitData
     colorA tint = COLOR_WHITE
     UnitTag tag
     playercolor pc
+    boolean hasCustomName = false
+    boolean hasCustomHeroName = false
+    boolean hasCustomMaxLife = false
+    boolean hasCustomMaxMana = false
+    boolean hasCustomDamage = false
+    boolean hasCustomAttackCooldown = false
+    boolean hasCustomFlyHeight = false
+    boolean hasCustomTint = false
+    SimpleFormationData simpleFormation = null
 
     construct(unit what)
         this.what = what
@@ -135,7 +197,8 @@ class YUnitData
             what.setVertexColor(COLOR_WHITE)
 
     ondestroy
-        destroy tag
+        if not what.isSpecial()
+            destroy tag
 
     static function getBy(int index) returns thistype
         return index castTo thistype

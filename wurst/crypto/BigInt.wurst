@@ -1,0 +1,174 @@
+package BigInt
+
+import Table
+
+int array operand1
+int array operand2
+
+// 32 base
+constant BASE = 10
+constant INT_LENGTH = 64
+constant charmap = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V"]
+constant charmapR = new Table
+
+tuple bigint(boolean sign, string num)
+
+function big(string s) returns bigint
+    if s.charAt(0) == "-"
+        return bigint(false, s.substring(1))
+    else
+        return bigint(true, s)
+
+function base10(string s) returns bigint
+    return big(s)
+
+function initCharmap()
+    for i = 0 to BASE - 1
+        charmapR.saveInt(charmap[i].getHash(), i)
+
+init
+    initCharmap()
+
+function int2char(int c) returns string
+    return charmap[c]
+
+function char2int(string c) returns int
+    return charmapR.loadInt(c.getHash())
+
+function isNegative(bigint n) returns boolean
+    return not n.sign
+
+function abs(bigint n) returns bigint
+    return bigint(not n.sign, n.num)
+
+@test function negativeTests()
+    assertTrue(isNegative(big("-123031")))
+    assertTrue(isNegative(big("-31")))
+    assertTrue(not isNegative(big("1")))
+    assertTrue(not isNegative(big("31200")))
+
+function compareAbs(string lhs, string rhs) returns int
+    var result = 0
+
+    if lhs == rhs
+        result = 0
+    else
+        let lhsLen = lhs.length()
+        let rhsLen = rhs.length()
+        if lhsLen != rhsLen
+            result = lhsLen > rhsLen ? 1 : -1
+        else
+            for i = 0 to lhsLen - 1
+                let lhsNum = char2int(lhs.charAt(i))
+                let rhsNum = char2int(rhs.charAt(i))
+                if lhsNum > rhsNum
+                    result = 1
+                    break
+                else
+                    result = -1
+                    break
+                
+    return result
+
+function compare(bigint lhs, bigint rhs) returns int
+    var result = 0
+
+    if lhs == rhs
+        result = 0
+    else if lhs.sign != rhs.sign
+        result = rhs.sign ? -1 : 1
+    else
+        return lhs.sign ? (compareAbs(lhs.num, rhs.num)) : (compareAbs(rhs.num, lhs.num))
+                
+    return result
+
+function isLessThan(bigint lhs, bigint rhs) returns boolean
+    return compare(lhs, rhs) < 0
+
+function add(bigint lhs, bigint rhs) returns bigint
+    if not lhs.sign and not rhs.sign
+        return bigint(false, add_2(lhs.num, rhs.num))
+    else if lhs.sign and not rhs.sign
+        return subtract_2(lhs.num, rhs.num)
+    else if not lhs.sign and rhs.sign
+        return subtract_2(rhs.num, lhs.num)
+    else
+        return bigint(true, add_2(lhs.num, rhs.num))
+
+function add_2(string lhs, string rhs) returns string
+    if compareAbs(lhs, rhs) == -1
+        return add_3(rhs, lhs)
+    else
+        return add_3(lhs, rhs)
+
+function add_3(string lhs, string rhs) returns string
+    var lhsi = lhs.length() - 1
+    var rhsi = rhs.length() - 1
+
+    var resultNum = ""
+    var carry = false
+    for i = lhsi downto 0
+        if rhsi < 0
+            resultNum = lhs.charAt(lhsi) + resultNum
+        else
+            var result = char2int(lhs.charAt(lhsi)) + char2int(rhs.charAt(rhsi))
+            resultNum = int2char((result mod BASE) + (carry ? 1 : 0)) + resultNum
+            carry = (result div BASE) > 0
+        lhsi--
+        rhsi--
+
+    return resultNum
+
+function subtract_2(string lhs, string rhs) returns bigint
+    return bigint(false, "")
+
+
+@test function compareTests()
+    initCharmap()
+    let a1 = compare(big("100"), big("100"))
+    let a2 = compare(big("-100"), big("-100"))
+    let a3 = compare(big("100"), big("-100"))
+    let a4 = compare(big("-100"), big("100")) 
+    let a5 = compare(big("1001"), big("2001")) 
+    let a6 = compare(big("2001"), big("1001"))
+    let a7 = compare(big("101"), big("1001"))
+    print(a1)
+    print(a2)
+    print(a3)
+    print(a4)
+    print(a5)
+    print(a6)
+    assertTrue(a1 == 0)
+    assertTrue(a2 == 0)
+    assertTrue(a3 == 1)
+    assertTrue(a4 == -1)
+    assertTrue(a5 == -1)
+    assertTrue(a6 == 1)
+    assertTrue(a7 == -1)
+
+@test function add_3_tests()
+    initCharmap()
+    let a1 = add_3("1", "1")
+    let a2 = add_3("10", "1")
+    let a3 = add_3("15", "13")
+    let a4 = add_3("52", "39")
+    let a5 = add_3("10000", "132")
+    print(a1)
+    print(a2)
+    print(a3)
+    print(a4)
+    print(a5)
+    assertTrue(a1 == "2")
+    assertTrue(a2 == "11")
+    assertTrue(a3 == "28")
+    assertTrue(a4 == "91")
+    assertTrue(a5 == "10132")
+
+@test function add_tests()
+    initCharmap()
+    let a1 = add(base10("1"), base10("1"))
+    let a2 = add(base10("1"), base10("1"))
+    let a3 = add(base10("1"), base10("1"))
+    let a4 = add(base10("1"), base10("1"))
+    let a5 = add(base10("1"), base10("1"))
+    let a6 = add(base10("1"), base10("1"))

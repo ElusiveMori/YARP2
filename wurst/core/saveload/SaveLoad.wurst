@@ -4,62 +4,80 @@ import initlater YARP
 import initlater AreaData
 import initlater UnitData
 
-interface LoadActionCallback
+public interface LoadActionCallback
     function run()
 
 public class RegionSaveData extends Persistable
     private string name
     private rect area
+    private vec2 origin = vec2(0, 0)
+    private vec2 dimensions = vec2(0, 0)
     private var areaData = new AreaData
-    private var offset = vec2(0, 0)
+    private var valid = false
 
     construct(player owner, string name)
         super(owner)
         this.name = name
-        this.offset = offset
 
     ondestroy
         destroy areaData
         area.remove()
 
-    override function getClassId() returns string
-        return "region-saves"
+    override function getPath() returns string
+        return "yarp2/saves/" + name + ".pld"
 
-    override function getId() returns string
-        return name
+    override function serialize(DataWriter writer)
+        writer.writeReal(area.getCenterX())
+        writer.writeReal(area.getCenterY())
 
-    override function supplyDefault()
-        skip
+        writer.writeReal(area.getMaxX() - area.getMinX())
+        writer.writeReal(area.getMaxY() - area.getMinY())
 
-    override function serialize(Buffer buffer)
-        buffer.writeReal(area.getMaxX() - area.getMinX())
-        buffer.writeReal(area.getMaxY() - area.getMinY())
+        areaData.serialize(writer)
 
-        areaData.serialize(buffer)
+    override function deserialize(DataReader reader)
+        origin.x = reader.readReal()
+        origin.y = reader.readReal()
 
-    override function deserialize(Buffer buffer)
-        let width = buffer.readReal()
-        let height = buffer.readReal()
+        dimensions.x = reader.readReal()
+        dimensions.y = reader.readReal()
 
-        area.resize(vec2(-width / 2, -height / 2) + playableCenter, vec2(width / 2, height / 2) + playableCenter)
-
-        areaData.deserialize(buffer)
+        areaData.deserialize(reader)
 
     override function onSaved()
         destroy this
 
     override function onLoaded(LoadStatus status)
+        if status != LoadStatus.SUCCESS 
+            YPrint.warn("An error occured during loading: " + lastError)
         if status == LoadStatus.SUCCESS
+            area.resize(vec2(-dimensions.x / 2, -dimensions.y / 2) + playableCenter, vec2(dimensions.x / 2, dimensions.y / 2) + playableCenter)
+            valid = true
+
+    function isValid() returns boolean
+        return valid
+
+    function startLoad(PersistableLoadCallback cb)
+        this.area = Rect(0, 0, 0, 0)
+        load(cb)
+
+    function startPaste(vec2 offset, LoadActionCallback cb)
+        if valid
             area.moveTo(offset)
             areaData.apply(area)
-        destroy this
-
-    function startLoad(vec2 offset)
-        this.offset = offset
-        this.area = Rect(0, 0, 0, 0)
-        load()
+            cb.run()
+            destroy this
 
     function startSave(rect area)
         this.area = area.copy()
         areaData.scan(area)
         save()
+
+    function getOrigin() returns vec2
+        return origin
+
+    function getWidth() returns real
+        return area.width()
+
+    function getHeight() returns real
+        return area.height()

@@ -1,3 +1,0 @@
-package Persistable_config
-
-@config constant PERSISTABLE_MAP_PREFIX = "yarp2"

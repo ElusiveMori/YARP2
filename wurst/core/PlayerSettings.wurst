@@ -15,67 +15,62 @@ public class PlayerSettings extends Persistable
         super(owner)
         lookup[owner.getId()] = this
 
-    override function getClassId() returns string
-        return "settings"
-
-    override function getId() returns string
-        return "local"
+    override function getPath() returns string
+        return "yarp2/settings.pld"
 
     override function onLoaded(LoadStatus status)
-        if localPlayer == owner
-            switch status
-                case FAIL_NOT_ENABLED
-                    YPrint.warn("Your player settings couldn't be loaded due to 'Allow Local Files' being disabled.")
-                    YPrint.warn("This also means you won't be able to load your builds.")
-                    YPrint.warn("You are still able to save them.")
-                    YPrint.warn("Look in F9 on information on how to enable Local Files.")
-                case FAIL_FILE_CORRUPT
-                    YPrint.warn("Your settings file has been corrupted and will be overwritten.")
-                case FAIL_DESERIALIZE
-                    YPrint.info("Your settings have been successfully initialized!")
-                    YPrint.info("You are also able to load builds.")
-                case FAIL_NO_PLAYER
-                case SUCCESS
-                    YPrint.info("Your settings have been successfully loaded!")
-                    YPrint.info("You are also able to load builds.")
+        // if localPlayer == owner
+        //     switch status
+        //         case FAIL_LOAD
+        //             YPrint.warn("Your settings file has failed to load.")
+        //         case FAIL_DESERIALIZE
+        //             YPrint.info("Your settings have been successfully initialized!")
+        //         case FAIL_NO_PLAYER
+        //         case SUCCESS
+        //             YPrint.info("Your settings have been successfully loaded!")
 
-        if status == LoadStatus.FAIL_FILE_CORRUPT or status == LoadStatus.FAIL_DESERIALIZE
+        if status != LoadStatus.SUCCESS
+            if localPlayer == owner
+                YPrint.info("Your settings have been re-initialized.")
             save()
+            supplyDefault()
+        else
+            if localPlayer == owner
+                YPrint.info("Your settings have been loaded.")
+
         applySettings()
 
     override function onSaved()
         if localPlayer == owner
             YPrint.info("Your settings have been saved.")
-            if not LocalFiles.isEnabled()
-                YPrint.warn("However, you will need to enable Local Files in the future in order to load them.")
     
-    override function supplyDefault()
+    function supplyDefault()
         preferredPlayerColor = -1
         preferredNameColor = color(0, 0, 0)
         preferredNameColorEnabled = false
         preferredName = ""
 
-    override function serialize(Buffer buffer)
-        buffer.writeInt(preferredPlayerColor)
+    override function serialize(DataWriter writer)
+        writer.writeByte(preferredPlayerColor)
 
-        buffer.writeBoolean(preferredNameColorEnabled)
+        writer.writeBoolean(preferredNameColorEnabled)
 
-        buffer.writeInt(preferredNameColor.red)
-        buffer.writeInt(preferredNameColor.green)
-        buffer.writeInt(preferredNameColor.blue)
+        writer.writeByte(preferredNameColor.red)
+        writer.writeByte(preferredNameColor.green)
+        writer.writeByte(preferredNameColor.blue)
 
-        buffer.writeString(preferredName)
+        writer.writeString(preferredName)
 
-    override function deserialize(Buffer buffer)
-        preferredPlayerColor = buffer.readInt()
+    override function deserialize(DataReader reader)
+        preferredPlayerColor = reader.readByte()
 
-        preferredNameColorEnabled = buffer.readBoolean()
+        preferredNameColorEnabled = reader.readBoolean()
 
-        preferredNameColor.red = buffer.readInt()
-        preferredNameColor.green = buffer.readInt()
-        preferredNameColor.blue = buffer.readInt()
+        preferredNameColor.red = reader.readByte()
+        preferredNameColor.green = reader.readByte()
+        preferredNameColor.blue = reader.readByte()
 
-        preferredName = buffer.readString()
+        preferredName = reader.readString()
 
     function enablePreferredName(string name)
         preferredName = name
@@ -144,7 +139,7 @@ public function player.getNameRealColored() returns string
     return this.getRealColor().toColorString() + this.getName() + "|r"
             
 init
-    LocalFiles.registerLocalFilesChecked() ->
+    doAfter(1) ->
         for i = 0 to bj_MAX_PLAYERS - 1
             let settings = new PlayerSettings(players[i])
             settings.load()

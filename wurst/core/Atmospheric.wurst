@@ -1,0 +1,91 @@
+package Atmospheric
+
+import initlater YARP
+
+constant FOG_DEFAULT_START = 0.
+constant FOG_DEFAULT_END   = 10000.
+constant FOG_DEFAULT_R     = 0.
+constant FOG_DEFAULT_G     = 0.
+constant FOG_DEFAULT_B     = 0.
+
+constant MODULATE_DEFAULT_R = (255. * 0.5).round()
+constant MODULATE_DEFAULT_G = (255. * 0.5).round()
+constant MODULATE_DEFAULT_B = (255. * 0.5).round()
+
+public var globalBlend = BLEND_MODE_MODULATE_2X
+public var globalModulateColor = colorA(0, 0, 0, 0)
+
+constant MASK_TEXTURE = "ReplaceableTextures\\CameraMasks\\White_mask.blp"
+
+function updateFog(LinkedList<PointRegionInfo> regions)
+    var fogStart = FOG_DEFAULT_START
+    var fogEnd = FOG_DEFAULT_END
+    var r = FOG_DEFAULT_R
+    var g = FOG_DEFAULT_G
+    var b = FOG_DEFAULT_B
+    var totalWeight = 0.
+
+    for info in regions
+        if info.specifier().getFog().state
+            totalWeight += info.weight()
+
+    for info in regions
+        if info.specifier().getFog().state
+            let specifier = info.specifier()
+            let weight = totalWeight > 1 ? (info.weight() / totalWeight) : info.weight()
+            let fog = specifier.getFog()
+
+            fogStart = linear(fogStart, fog.min, weight)
+            fogEnd = linear(fogEnd, fog.max, weight)
+            r = linear(r, fog.r, weight)
+            g = linear(g, fog.g, weight)
+            b = linear(b, fog.b, weight)
+    
+    SetTerrainFogEx(0, fogStart, fogEnd, 0, r, g, b)
+
+function updateColorCorrection(LinkedList<PointRegionInfo> regions)
+    SetCineFilterTexture(MASK_TEXTURE)
+    SetCineFilterDuration(0)
+    SetCineFilterStartUV(0, 0, 1, 1)
+    SetCineFilterEndUV(0, 0, 1, 1)
+    SetCineFilterTexMapFlags(TEXMAP_FLAG_NONE)
+
+    var r = MODULATE_DEFAULT_R
+    var g = MODULATE_DEFAULT_G
+    var b = MODULATE_DEFAULT_B
+
+    var totalWeight = 0.
+
+    for info in regions
+        if info.specifier().getFog().state
+            totalWeight += info.weight()
+
+    for info in regions
+        if info.specifier().getColorCorrect().state
+            let specifier = info.specifier()
+            let weight = totalWeight > 1 ? info.weight() / totalWeight : info.weight()
+            let corrector = specifier.getColorCorrect()
+
+            r = r.lerp(corrector.r, weight)
+            g = g.lerp(corrector.g, weight)
+            b = b.lerp(corrector.b, weight)
+
+    SetCineFilterBlendMode(globalBlend)
+    SetCineFilterStartColor(r, g, b, 255)
+    SetCineFilterEndColor(r, g, b, 255)
+    DisplayCineFilter(true)
+
+function updateAtmospheric()
+    let pos = getCameraTargetPosition()
+    let regions = pos.getRegionSpecifiers()
+
+    updateFog(regions)
+    updateColorCorrection(regions)
+
+    for r in regions
+        destroy r
+    destroy regions
+
+init
+    doPeriodically(ANIMATION_PERIOD) (_) ->
+        updateAtmospheric()
