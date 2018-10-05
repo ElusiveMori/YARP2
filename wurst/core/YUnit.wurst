@@ -1,6 +1,11 @@
 package YUnit
 
-import initlater YARP
+import YARPPrelude
+import Registry
+import UnitTag
+import initlater FormationMovement
+import Permissions
+import Config
 
 constant ABIL_UPROOT_ID = "Aro1"
 constant ABIL_UPROOT_BOOK_ID = compiletime(ABIL_ID_GEN.next())
@@ -145,20 +150,20 @@ public function yunit.hasCustomMaxMana() returns boolean
 
 public function yunit.setDamage(int damage)
     y(this).hasCustomDamage = true
-    this.u.setBaseDamage(damage, 0)
+    this.u.setBaseDamage(damage, 1)
 
 public function yunit.getDamage() returns int
-    return this.u.getBaseDamage(0)
+    return this.u.getBaseDamage(1)
 
 public function yunit.hasCustomDamage() returns boolean
     return y(this).hasCustomDamage
 
 public function yunit.setAttackCooldown(real cooldown)
     y(this).hasCustomAttackCooldown = true
-    this.u.setAttackCooldown(cooldown, 0)
+    this.u.setAttackCooldown(cooldown, 1)
 
 public function yunit.getAttackCooldown() returns real
-    return this.u.getAttackCooldown(0)
+    return this.u.getAttackCooldown(1)
 
 public function yunit.hasCustomAttackCooldown() returns boolean
     return y(this).hasCustomAttackCooldown

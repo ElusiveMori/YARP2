@@ -38,15 +38,15 @@ init
                 let data = new RegionSaveData(owner, arguments.getString(2))
                 data.startLoad() (_) ->
                     if not data.isValid()
-                        YPrint.warn("Your save has failed to load.")
                         destroy data
-                    let specifier = new RegionSpecifier(owner, data.getOrigin())
-                    specifier.setWidth(data.getWidth())
-                    specifier.setHeight(data.getHeight())
-                    specifier.initLoad(data)
-                    if localPlayer == owner
-                        setCameraPosition(data.getOrigin())
-                    owner.selectSingleUnit(specifier.getUnit())
+                    else
+                        let specifier = new RegionSpecifier(owner, data.getOrigin())
+                        specifier.setWidth(data.getWidth())
+                        specifier.setHeight(data.getHeight())
+                        specifier.initLoad(data)
+                        if localPlayer == owner
+                            setCameraPosition(data.getOrigin())
+                        owner.selectSingleUnit(specifier.getUnit())
             case "fog"
                 let subcommand = arguments.getString(2)
                 var fog = regionSpecifier.getFog()

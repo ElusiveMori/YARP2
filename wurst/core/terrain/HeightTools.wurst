@@ -1,0 +1,24 @@
+package HeightTools
+
+import initlater YARP
+
+constant HEIGHT_BOOK_ID = compiletime(ABIL_ID_GEN.next())
+constant HEIGHT_BOOK_ORDER = compiletime(getNewOrder())
+
+
+
+// @compiletime function generateTerrainTools()
+//     new ChannelAbilityPreset(REGION_SPECIFIER_LOAD_ID, 1, true)
+//         ..presetTargetTypes(Targettype.NONE)
+//         ..setName("Load!")
+//         ..setTooltipNormal(1, "Load!")
+//         ..setTooltipNormalExtended(1, "Loads your save into this location!")
+//         ..setIconNormal(Icons.bTNArthas)
+//         ..setCastingTime(1, 0)
+
+//     new AbilityDefinitionSpellBook(HEIGHT_BOOK_ID)
+//         ..setLevels(1)
+//         ..setSpellList(1, "")
+//         ..setMaximumSpells(1, 1)
+//         ..setMinimumSpells(1, 1)
+//         ..setBaseOrderID(1, HEIGHT_BOOK_ORDER)

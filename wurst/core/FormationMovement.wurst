@@ -1,6 +1,7 @@
 package FormationMovement
 
-import initlater YARP
+import YARPPrelude
+import YUnit
 
 enum FormationMode
     NONE
@@ -32,9 +33,7 @@ public class FormationSettings
         var column = 0.
         if firstRowCount != 0 and row == 0 and firstRowCount != rectWidth
             let spacing = (rectWidth - 1) / (firstRowCount)
-            print("spacing: " + spacing.toString())
             column += spacing / 2 + spacing * orderCount
-            print("column: " + column.toString())
         else
             column = ((orderCount - firstRowCount) mod rectWidth).toReal()
 
@@ -47,7 +46,6 @@ public function player.getFormationSettings() returns FormationSettings
     return playerFormationModes[this.getId()]
 
 public class SimpleFormationData
-    private static thistype array lookup
     private LinkedList<unit> unitList
     private HashMap<int, real> unitOrdersX = new HashMap<int, real>
     private HashMap<int, real> unitOrdersY = new HashMap<int, real>

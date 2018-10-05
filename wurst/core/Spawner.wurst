@@ -1,6 +1,6 @@
 package Spawner
 
-import initlater YARP
+import YARPPrelude
 
 public constant SPAWNER_ID = compiletime(UNIT_ID_GEN.next())
 public constant CARGO_HOLD_ID = compiletime(ABIL_ID_GEN.next())

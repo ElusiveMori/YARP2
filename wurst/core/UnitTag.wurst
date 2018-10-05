@@ -1,6 +1,8 @@
 package UnitTag
 
-import initlater YARP
+import YARPPrelude
+import Permissions
+import PlayerSettings
 
 constant TEXT_SIZE = 8.
 constant VISIBILITY_UPDATE_PERIOD = 0.125

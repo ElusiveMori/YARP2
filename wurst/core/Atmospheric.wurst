@@ -1,6 +1,7 @@
 package Atmospheric
 
-import initlater YARP
+import YARPPrelude
+import RegionSpecifier
 
 constant FOG_DEFAULT_START = 0.
 constant FOG_DEFAULT_END   = 10000.

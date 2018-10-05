@@ -1,6 +1,6 @@
 package PlayerSettings
 
-import initlater YARP
+import YARPPrelude
 
 public class PlayerSettings extends Persistable
     private static thistype array lookup

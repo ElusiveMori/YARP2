@@ -10,126 +10,140 @@ class Box<T>
         this.v = v
 
 init
-    CommandRegistry.register("test") (context, arguments) ->
-        print("arg1:" + arguments.getString(1))
-        print("arg2:" + arguments.getString(2))
-        print("arg3:" + arguments.getString(3))
+    execute() ->
+        CommandRegistry.register("test") (context, arguments) ->
+            print("arg1:" + arguments.getString(1))
+            print("arg2:" + arguments.getString(2))
+            print("arg3:" + arguments.getString(3))
 
-    CommandRegistry.register("exec") (context, arguments) ->
-        let success = try() -> 
-            let eee = Niya.parse(arguments.getString(1))
-            if eee.error != null
-                print(eee.error)
+        CommandRegistry.register("exec") (context, arguments) ->
+            let success = try() -> 
+                let eee = Niya.parse(arguments.getString(1))
+                if eee.error != null
+                    print(eee.error)
+                else
+                    print(eee.expr.eval(context.scriptContext()))
+                print("Done!")
+            if not success
+                print("We fucked up")
+                print(lastError)
+
+        SimpleCommand.register("spawn") (context, arguments) ->
+            let idString = arguments.getString(2)
+            int id
+            if idString.charAt(0) == "_"
+                id = fromRawCode(idString.substring(1))
             else
-                print(eee.expr.eval(context.scriptContext()))
-            print("Done!")
-        if not success
-            print("We fucked up")
-            print(lastError)
+                id = UnitId(idString)
 
-    SimpleCommand.register("spawn") (context, arguments) ->
-        let idString = arguments.getString(2)
-        int id
-        if idString.charAt(0) == "_"
-            id = fromRawCode(idString.substring(1))
-        else
-            id = UnitId(idString)
+            for i = 0 to arguments.getInt(1) - 1
+                createUnit(context.owner(), id, vec2(0, 0), angle(0))
 
-        for i = 0 to arguments.getInt(1) - 1
-            createUnit(context.owner(), id, vec2(0, 0), angle(0))
+        SimpleCommand.register("n2") (context, argument) ->
+            var s = ""
+            for i = 0 to 1023
+                s += "a"
+            context.owner().setName(s)
+            print(context.owner().getName())
+            print(context.owner().getName().length())
 
-    SimpleCommand.register("n2") (context, argument) ->
-        var s = ""
-        for i = 0 to 1023
-            s += "a"
-        context.owner().setName(s)
-        print(context.owner().getName())
-        print(context.owner().getName().length())
+        SimpleCommand.register("loadme") (context, argument) ->
+            execute() ->
+                PlayerSettings.get(context.owner()).load()
 
-    SimpleCommand.register("loadme") (context, argument) ->
-        execute() ->
-            PlayerSettings.get(context.owner()).load()
+        SimpleCommand.register("network") (context, arguments) ->
+            let net = new Network(context.owner())
+            let owner = context.owner()
 
-    SimpleCommand.register("network") (context, arguments) ->
-        let net = new Network(context.owner())
-        let owner = context.owner()
+            if localPlayer == owner
+                net.getData().writeInt(1)
+                print("sending 1")
 
-        if localPlayer == owner
-            net.getData().writeInt(1)
-            print("sending 1")
+            net.start() (status, buffer) ->
+                if localPlayer != owner
+                    print("received " + buffer.readInt().toString())
 
-        net.start() (status, buffer) ->
-            if localPlayer != owner
-                print("received " + buffer.readInt().toString())
+        SimpleCommand.register("splittest") (context, arguments) ->
+            let nlparser = new LineSplitterParser(arguments.getString(2), arguments.getInt(1))
+            print(nlparser.process())
 
-    SimpleCommand.register("splittest") (context, arguments) ->
-        let nlparser = new LineSplitterParser(arguments.getString(2), arguments.getInt(1))
-        print(nlparser.process())
-
-    SimpleCommand.register("centerfactor") (context, arguments) ->
-        centerFactor = arguments.getReal(1)
-    
-    SimpleCommand.register("offset") (context, arguments) ->
-        staticOffset = arguments.getReal(1)
-
-    SimpleCommand.register("logtest") (context, arguments) ->
-        var box = new Box(0)
-        try() ->
-            while true
-                BlzSetAbilityTooltip('Aabs', "asdfghj", 0)
-                box.v++
-        print(box.v)
-
-    SimpleCommand.register("blend") (context, arguments) ->
-        if arguments.getInt(1) == 1
-            globalBlend = BLEND_MODE_MODULATE_2X
-        else
-            globalBlend = BLEND_MODE_MODULATE
-
-    SimpleCommand.register("modulate") (context, arguments) ->
-        globalModulateColor = colorA(
-            0 .lerp(arguments.getReal(1), 255).toInt(), 
-            0 .lerp(arguments.getReal(2), 255).toInt(), 
-            0 .lerp(arguments.getReal(3), 255).toInt(), 
-            0 .lerp(arguments.getReal(4), 255).toInt())
-
-    SimpleCommand.register("time") (context, arguments) ->
-        SetTimeOfDay(arguments.getReal(1))
-
-    SimpleCommand.register("fail") (context, arguments) ->
-        execute() ->
-            error("fail")
-
-    SimpleCommand.register("testnetwork") (context, arguments) ->
-        let network = new Network(context.owner())
-        network.start() (status, buffer) ->
-            print("network!")
-
-    SimpleCommand.register("getdata") (context, arguments) ->
-        print(getObjectDataField(arguments.getString(1).fromRawCode(), arguments.getString(2)))
-
-    SimpleCommand.register("preloadtest") (context, arguments) ->
-        execute() ->
-            var s = "AAAAAAAAAAAAA"
-
-            for i = s.length() downto 1
-                PreloadGenClear()
-                PreloadGenStart()
-                Preload(s)
-                PreloadGenEnd("lengthtest/preloadtest" + i.toString() + ".pld")
-                s = s.substring(1)
-
-    SimpleCommand.register("iotest") (context, arguments) ->
-        var s = ""
-        var c = 1
-        let l = arguments.getInt(1)
-        for i = 1 to l
-            s += (c mod 10).toString()
-            c++
-        PacketWriter.initialize()
-        PacketWriter.write(s)
-        PacketWriter.commit("iotest.pld")
-        PacketReader.open("iotest.pld")
+        SimpleCommand.register("centerfactor") (context, arguments) ->
+            centerFactor = arguments.getReal(1)
         
-    SimpleCommand.register("file") (context, arguments) ->
-        PacketReader.open(arguments.getString(1))
+        SimpleCommand.register("offset") (context, arguments) ->
+            staticOffset = arguments.getReal(1)
+
+        SimpleCommand.register("logtest") (context, arguments) ->
+            var box = new Box(0)
+            try() ->
+                while true
+                    BlzSetAbilityTooltip('Aabs', "asdfghj", 0)
+                    box.v++
+            print(box.v)
+
+        SimpleCommand.register("blend") (context, arguments) ->
+            if arguments.getInt(1) == 1
+                globalBlend = BLEND_MODE_MODULATE_2X
+            else
+                globalBlend = BLEND_MODE_MODULATE
+
+        SimpleCommand.register("modulate") (context, arguments) ->
+            globalModulateColor = colorA(
+                0 .lerp(arguments.getReal(1), 255).toInt(), 
+                0 .lerp(arguments.getReal(2), 255).toInt(), 
+                0 .lerp(arguments.getReal(3), 255).toInt(), 
+                0 .lerp(arguments.getReal(4), 255).toInt())
+
+        SimpleCommand.register("time") (context, arguments) ->
+            SetTimeOfDay(arguments.getReal(1))
+
+        SimpleCommand.register("fail") (context, arguments) ->
+            execute() ->
+                error("fail")
+
+        SimpleCommand.register("testnetwork") (context, arguments) ->
+            let network = new Network(context.owner())
+            network.start() (status, buffer) ->
+                print("network!")
+
+        SimpleCommand.register("getdata") (context, arguments) ->
+            print(getObjectDataField(arguments.getString(1).fromRawCode(), arguments.getString(2)))
+
+        SimpleCommand.register("preloadtest") (context, arguments) ->
+            execute() ->
+                var s = "AAAAAAAAAAAAA"
+
+                for i = s.length() downto 1
+                    PreloadGenClear()
+                    PreloadGenStart()
+                    Preload(s)
+                    PreloadGenEnd("lengthtest/preloadtest" + i.toString() + ".pld")
+                    s = s.substring(1)
+
+        SimpleCommand.register("iotest") (context, arguments) ->
+            var s = ""
+            var c = 1
+            let l = arguments.getInt(1)
+            for i = 1 to l
+                s += (c mod 10).toString()
+                c++
+            PacketWriter.initialize()
+            PacketWriter.write(s)
+            PacketWriter.commit("iotest.pld")
+            PacketReader.open("iotest.pld")
+            
+        SimpleCommand.register("file") (context, arguments) ->
+            PacketReader.open(arguments.getString(1))
+
+        SimpleCommand.register("bump") (context, arguments) ->
+            let radius = arguments.getInt(1)
+            let amount = arguments.getReal(2)
+
+            let point = context.owner().getSpawner().getPos().getTile()
+            HeightField.bump(point, radius, amount)
+
+        SimpleCommand.register("plateau") (context, arguments) ->
+            let size = arguments.getInt(1)
+
+            let point = context.owner().getSpawner().getPos().getTile()
+            HeightField.plateau(point, size)

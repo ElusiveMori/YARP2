@@ -1,6 +1,8 @@
 package UnitData
 
-import YARP
+import YARPPrelude
+import initlater YUnit
+import Registry
 
 constant CUSTOM_HERO_NAME_FLAG = 0
 constant CUSTOM_NAME_FLAG = 1
@@ -13,8 +15,9 @@ constant CUSTOM_TINT_FLAG = 7
 
 class SingleUnitData implements DataSerializable
     private yunit what
+    private vec2 origin
     private vec2 pos
-    private int id
+    private int dictionaryId
 
     private bitset flags
 
@@ -34,9 +37,9 @@ class SingleUnitData implements DataSerializable
     private real attackCooldown
 
     private function serializeMandatory(DataWriter writer)
-        writer.writeString(what.getUid())
-        writer.writeReal(what.u.getX())
-        writer.writeReal(what.u.getY())
+        writer.writeShort(dictionaryId)
+        writer.writeReal(what.u.getX() - origin.x)
+        writer.writeReal(what.u.getY() - origin.y)
 
         writer.writeByte(what.getColor().toInt())
         writer.writeReal(what.getScale())
@@ -102,7 +105,7 @@ class SingleUnitData implements DataSerializable
         serializeOptionals(writer)
 
     private function deserializeMandatory(DataReader reader)
-        id = getIdForUid(reader.readString())
+        dictionaryId = reader.readShort()
         pos = vec2(reader.readReal(), reader.readReal())
         playerColorId = reader.readByte()
         size = reader.readReal()
@@ -145,14 +148,82 @@ class SingleUnitData implements DataSerializable
         deserializeMandatory(reader)
         deserializeOptionals(reader)
 
-    function apply(rect area, player owner)
-        let what = createUnit(owner, id, vec2(0, 0), angle(0))
+    function apply(rect area, player owner, UnitDictionary dictionary)
+        let id = getIdForUid(dictionary.getUidForId(this.dictionaryId))
+        let what = yunit(createUnit(owner, id, vec2(0, 0), angle(0)))
 
-        what.setPos(pos)
+        what.u.setPos(area.getCenter() + pos)
+        what.setColor(playerColorId.toPlayerColor())
+        what.setScale(size)
 
+        if flags.contains(CUSTOM_NAME_FLAG)
+            what.setName(customName)
+        
+        if flags.contains(CUSTOM_HERO_NAME_FLAG)
+            what.setHeroName(customHeroName)
 
-class MultipleUnitData implements DataSerializable
+        if flags.contains(CUSTOM_MAX_LIFE_FLAG)
+            what.setMaxLife(maxLife)
+
+        if flags.contains(CUSTOM_MAX_MANA_FLAG)
+            what.setMaxMana(maxMana)
+
+        if flags.contains(CUSTOM_DAMAGE_FLAG)
+            what.setDamage(damage)
+
+        if flags.contains(CUSTOM_ATTACK_COOLDOWN_FLAG)
+            what.setAttackCooldown(attackCooldown)
+
+        if flags.contains(CUSTOM_FLY_HEIGHT_FLAG)
+            what.setHeight(flyHeight)
+
+        if flags.contains(CUSTOM_TINT_FLAG)
+            what.setTint(tint)
+
+    function scan(rect area, yunit what, UnitDictionary dictionary)
+        this.what = what
+        this.origin = area.getCenter()
+        this.dictionaryId = dictionary.getIdForUid(what.getUid())
+
+class UnitDictionary implements DataSerializable
+    private int currentId = 0
+    private Table dictionary = new Table
+
+    ondestroy
+        destroy dictionary
+
+    override function serialize(DataWriter writer)
+        writer.writeShort(currentId)
+
+        for i = 1 to currentId
+            let uid = dictionary.loadString(i - 1)
+            writer.writeString(uid)
+
+    override function deserialize(DataReader reader)
+        let size = reader.readShort()
+
+        for i = 1 to size
+            let uid = reader.readString()
+
+            dictionary.saveString(i - 1, uid)
+            dictionary.saveInt(uid.getHash(), i - 1)
+
+    function getIdForUid(string uid) returns int
+        let hash = uid.getHash()
+        if dictionary.hasInt(hash)
+            return dictionary.loadInt(hash)
+        else
+            dictionary.saveInt(hash, currentId)
+            dictionary.saveString(currentId, uid)
+            currentId++
+            return currentId - 1
+
+    function getUidForId(int id) returns string
+        return dictionary.loadString(id)
+
+public class MultipleUnitData implements DataSerializable
     private let list = new HashList<SingleUnitData>
+    private let dictionary = new UnitDictionary()
 
     override function serialize(DataWriter writer)
         writer.writeInt(list.size())
@@ -160,10 +231,24 @@ class MultipleUnitData implements DataSerializable
         for data in list
             data.serialize(writer)
 
+        dictionary.serialize(writer)
+
     override function deserialize(DataReader reader)
         let size = reader.readInt()
 
         for i = 0 to size - 1
             let data = new SingleUnitData
             data.deserialize(reader)
+            list.add(data)
+
+        dictionary.deserialize(reader)
+
+    function apply(rect area, player owner)
+        for unitData in list
+            unitData.apply(area, owner, dictionary)
+
+    function scan(rect area)
+        forUnitsInRect(area) (what) ->
+            let data = new SingleUnitData()
+            data.scan(area, yunit(what), dictionary)
             list.add(data)

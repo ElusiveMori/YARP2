@@ -1,0 +1,99 @@
+package TerrainData
+
+import YARPPrelude
+
+constant string charMap = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSUTVWXYZ"
+
+class TerrainCell
+    protected string data
+    private int current = 0
+
+    construct()
+        this.data = ""
+
+    construct(string data)
+        this.data = data
+
+    function next(HashMap<char, int> tileMap) returns int
+        if current >= data.length()
+            return 0
+
+        let val = tileMap.get(data.charAt(current).toChar())
+        current++
+
+        return val
+
+public class TerrainData implements DataSerializable
+    private let tileMap = new IterableMap<char, int>
+    private let cellList = new LinkedList<TerrainCell>
+
+    private var currentNewChar = 0
+    private var currentCell = new TerrainCell
+
+    construct()
+
+    ondestroy
+        destroy tileMap
+        destroy cellList
+        destroy currentCell
+
+    function apply(rect area)
+        let iter = area.tileIterator()
+
+        executeWhile(1024, () -> iter.hasNext()) ->
+            let id = cellList.peek().next(tileMap)
+
+            if id == 0
+                destroy cellList.pop()
+                if cellList.isEmpty()
+                    iter.close()
+            else
+                iter.next().setType(id)
+
+        destroy iter
+
+    function scan(rect area)
+        let tileMapInverted = new HashMap<int, char>
+        let iter = area.tileIterator()
+
+        executeWhile(1024, () -> iter.hasNext()) ->
+            let currentTile = iter.next()
+            let id = currentTile.getType()
+            if not tileMapInverted.has(id)
+                let tileChar = charMap.charAt(currentNewChar).toChar()
+                tileMapInverted.put(id, tileChar)
+                tileMap.put(tileChar, id)
+                currentNewChar++
+            
+            currentCell.data += tileMapInverted.get(id).toString()
+            if currentCell.data.length() >= 1023
+                cellList.push(currentCell)
+                currentCell = new TerrainCell
+
+        cellList.push(currentCell)
+
+        destroy iter
+        destroy tileMapInverted
+
+    override function serialize(DataWriter writer)
+        writer.writeByte(tileMap.size())
+        for key in tileMap
+            let val = tileMap.get(key)
+            writer.writeByte(key.toInt())
+            writer.writeInt(val)
+        
+        writer.writeShort(cellList.size())
+        for cell in cellList
+            writer.writeString(cell.data)
+
+    override function deserialize(DataReader reader)
+        var count = reader.readByte()
+        for i = 1 to count
+            let key = reader.readByte()
+            let val = reader.readInt()
+            tileMap.put(char(key), val)
+
+        count = reader.readShort()
+        for i = 1 to count
+            let cell = reader.readString()
+            cellList.push(new TerrainCell(cell))

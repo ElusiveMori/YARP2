@@ -1,6 +1,6 @@
 package MiscCommands
 
-import initlater YARP
+import YARP
 
 init
     SimpleCommand.register("form") (context, arguments) ->

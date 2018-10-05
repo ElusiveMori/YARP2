@@ -14,9 +14,9 @@ public class CommandRegistry
 		return registry.get(command.getHash())
 	
 public class Argument
-	boolean isExpr
-	string value
-	Expr expr
+	boolean isExpr = false
+	string value = null
+	Expr expr = null
 
 	construct(Expr expr)
 		this.isExpr = true
@@ -130,9 +130,10 @@ public class CommandContext
 	private LinkedList<unit> selection
 	private var isHalted = false
 
-	construct(CommandExecutor executor)
+	construct(CommandExecutor executor, ScriptContext scriptContext)
 		this.executor = executor
 		this.selection = executor.owner().selectedUnitsList()
+		this.scriptContext = scriptContext
 
 	ondestroy
 		destroy selection
@@ -205,7 +206,7 @@ public class CommandExecutor
 		this.owner = owner
 
 	protected function newContext() returns CommandContext
-		let context = new CommandContext(this)
+		let context = new CommandContext(this, scriptContext)
 		contextList.add(context)
 		return context
 

@@ -84,6 +84,8 @@ class NullaryExpr extends Expr
 	construct(NullaryOp operator)
 		this.operator = operator
 
+	ondestroy
+
 	override function eval(ScriptContext context) returns real
 		return operator.run(context)
 
@@ -156,6 +158,8 @@ class VarGetExpr extends Expr
 	construct(string varName)
 		this.varName = varName
 
+	ondestroy
+
 	override function eval(ScriptContext context) returns real
 		return context.getVar(varName)
 
@@ -188,6 +192,8 @@ class LiteralExpr extends Expr
 	construct(string value)
 		this.strValue = value
 		this.value = value.toReal()
+
+	ondestroy
 
 	override function eval(ScriptContext context) returns real
 		return value

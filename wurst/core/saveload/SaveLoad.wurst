@@ -1,8 +1,8 @@
 package SaveLoad
 
-import initlater YARP
-import initlater AreaData
-import initlater UnitData
+import YARPPrelude
+import AreaData
+import UnitData
 
 public interface LoadActionCallback
     function run()
@@ -13,6 +13,7 @@ public class RegionSaveData extends Persistable
     private vec2 origin = vec2(0, 0)
     private vec2 dimensions = vec2(0, 0)
     private var areaData = new AreaData
+    private var unitData = new MultipleUnitData
     private var valid = false
 
     construct(player owner, string name)
@@ -21,17 +22,18 @@ public class RegionSaveData extends Persistable
 
     ondestroy
         destroy areaData
+        destroy unitData
         area.remove()
 
     override function getPath() returns string
         return "yarp2/saves/" + name + ".pld"
 
     override function serialize(DataWriter writer)
-        writer.writeReal(area.getCenterX())
-        writer.writeReal(area.getCenterY())
+        writer.writeReal(origin.x)
+        writer.writeReal(origin.y)
 
-        writer.writeReal(area.getMaxX() - area.getMinX())
-        writer.writeReal(area.getMaxY() - area.getMinY())
+        writer.writeReal(dimensions.x)
+        writer.writeReal(dimensions.y)
 
         areaData.serialize(writer)
 
@@ -48,8 +50,15 @@ public class RegionSaveData extends Persistable
         destroy this
 
     override function onLoaded(LoadStatus status)
-        if status != LoadStatus.SUCCESS 
-            YPrint.warn("An error occured during loading: " + lastError)
+        if localPlayer == owner
+            switch status
+                case SUCCESS
+                case FAIL_READ
+                    YPrint.warn("Couldn't load the save file. No file exists or it has been corrupted.")
+                case FAIL_DESERIALIZE
+                    YPrint.warn("Couldn't load the save file. It has been corrupted or is outdated.")
+                case FAIL_NO_PLAYER
+
         if status == LoadStatus.SUCCESS
             area.resize(vec2(-dimensions.x / 2, -dimensions.y / 2) + playableCenter, vec2(dimensions.x / 2, dimensions.y / 2) + playableCenter)
             valid = true
@@ -65,12 +74,18 @@ public class RegionSaveData extends Persistable
         if valid
             area.moveTo(offset)
             areaData.apply(area)
+            unitData.apply(area, owner)
             cb.run()
             destroy this
 
     function startSave(rect area)
         this.area = area.copy()
         areaData.scan(area)
+        unitData.scan(area)
+
+        origin = area.getCenter()
+        dimensions = vec2(area.width(), area.height())
+
         save()
 
     function getOrigin() returns vec2

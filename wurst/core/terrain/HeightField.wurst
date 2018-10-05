@@ -1,0 +1,85 @@
+package HeightField
+
+import initlater YARP
+
+public class HeightField
+    static private hashtable heightFieldOriginal = InitHashtable()
+    static private hashtable heightFieldModified = InitHashtable()
+
+    protected static function scan()
+        let area = boundRect
+        let iter = new RectTileIterator(area)
+
+        executeWhile(1024, () -> iter.hasNext()) ->
+            let point = iter.next()
+            heightFieldOriginal.saveReal(point.getIdX(), point.getIdY(), point.getHeight())
+            heightFieldModified.saveReal(point.getIdX(), point.getIdY(), 0.)
+            
+        destroy iter
+
+    @inline
+    static function makeDeform(tile point, real value)
+        TerrainDeformCrater(point.getX(), point.getY(), 4, -value, 10, true)
+
+    @inline
+    static function getPointOriginalHeight(tile point) returns real
+        return heightFieldOriginal.loadReal(point.getIdX(), point.getIdY())
+
+    @inline
+    static function getPointModifiedHeight(tile point) returns real
+        return heightFieldModified.loadReal(point.getIdX(), point.getIdY())  
+
+    @inline
+    static function getPointTotalHeight(tile point) returns real
+        return getPointOriginalHeight(point) + getPointModifiedHeight(point)
+
+    @inline
+    static function setPointModifiedHeight(tile point, real value)
+        heightFieldModified.saveReal(point.getIdX(), point.getIdY(), value)
+
+    @inline
+    static function setPointHeightTo(tile point, real newValue)
+        let original = getPointOriginalHeight(point)
+        let modified = getPointModifiedHeight(point)
+
+        let d = newValue - (original + modified)
+
+        if d >= 1 or d <= -1
+            setPointModifiedHeight(point, modified + d)
+            makeDeform(point, d)
+
+    @inline
+    static function raisePointHeightBy(tile point, real value)
+        setPointModifiedHeight(point, getPointModifiedHeight(point) + value)
+        makeDeform(point, value)
+
+    @inline
+    static function resetPointHeight(tile point)
+        let d = getPointOriginalHeight(point) - getPointModifiedHeight(point)
+        setPointModifiedHeight(point, 0)
+        makeDeform(point, d)
+
+    static function bump(tile point, int radius, real amount)
+        let centerX = point.getIdX()
+        let centerY = point.getIdY()
+
+        for i = -radius to radius
+            for j = -radius to radius
+                let currentX = centerX + i
+                let currentY = centerY + j
+
+                let id = i.abs().toReal() / (radius)
+                let jd = j.abs().toReal() / (radius)
+
+                let z = SquareRoot((0.5 - id * id - jd * jd).clamp(0, 1)) * amount
+                raisePointHeightBy(tile(currentX, currentY), z)
+
+    static function plateau(tile point, int size)
+        let height = getPointTotalHeight(point)
+
+        for i = -size to size
+            for j = -size to size
+                setPointHeightTo(tile(point.getIdX() + i, point.getIdY() + j), height)
+
+init
+    HeightField.scan()
