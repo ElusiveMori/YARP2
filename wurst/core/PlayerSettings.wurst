@@ -12,23 +12,13 @@ public class PlayerSettings extends Persistable
     private string preferredName
 
     construct(player owner)
-        super(owner)
+        super(owner, new XorEncryptor())
         lookup[owner.getId()] = this
 
     override function getPath() returns string
         return "yarp2/settings.pld"
 
     override function onLoaded(LoadStatus status)
-        // if localPlayer == owner
-        //     switch status
-        //         case FAIL_LOAD
-        //             YPrint.warn("Your settings file has failed to load.")
-        //         case FAIL_DESERIALIZE
-        //             YPrint.info("Your settings have been successfully initialized!")
-        //         case FAIL_NO_PLAYER
-        //         case SUCCESS
-        //             YPrint.info("Your settings have been successfully loaded!")
-
         if status != LoadStatus.SUCCESS
             if localPlayer == owner
                 YPrint.info("Your settings have been re-initialized.")
@@ -45,7 +35,7 @@ public class PlayerSettings extends Persistable
             YPrint.info("Your settings have been saved.")
     
     function supplyDefault()
-        preferredPlayerColor = -1
+        preferredPlayerColor = 255
         preferredNameColor = color(0, 0, 0)
         preferredNameColorEnabled = false
         preferredName = ""
@@ -99,7 +89,7 @@ public class PlayerSettings extends Persistable
         save()
 
     function disablePreferredColor()
-        preferredPlayerColor = -1
+        preferredPlayerColor = 255
         applySettings()
         save()
 
@@ -114,7 +104,7 @@ public class PlayerSettings extends Persistable
         return col
 
     function applySettings()
-        if preferredPlayerColor >= 0
+        if preferredPlayerColor != 255
             owner.setColor(preferredPlayerColor.toPlayerColor())
         else
             owner.setColor(owner.getId().toPlayerColor())

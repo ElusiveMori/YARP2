@@ -1,6 +1,9 @@
 package Command
 
-import initlater YARP
+import YARPPrelude
+import public Scripting
+import public CommandWrappers
+
 public interface Command
 	function run(CommandContext context, Arguments arguments)
 

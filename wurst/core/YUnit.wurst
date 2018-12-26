@@ -6,10 +6,13 @@ import UnitTag
 import initlater FormationMovement
 import Permissions
 import Config
+import EffectProxy
 
 constant ABIL_UPROOT_ID = "Aro1"
 constant ABIL_UPROOT_BOOK_ID = compiletime(ABIL_ID_GEN.next())
 constant ABIL_UPROOT_BOOK_ORDER = compiletime(getNewOrder())
+
+constant UNIT_PROXY_ID = compiletime(UNIT_ID_GEN.next())
 
 function y(yunit what) returns YUnitData
     return YUnitData.getBy(what.u)
@@ -21,7 +24,7 @@ function y(yunit what) returns YUnitData
 public tuple yunit(unit u)
 
 public function yunit.getUid() returns string
-    return getUidForId(this.u.getTypeId())
+    return this.u.getUid()
 
 public function yunit.remove()
     this.u.remove()
@@ -56,16 +59,22 @@ public function yunit.uproot()
         this.u.addAbility(ABIL_UPROOT_BOOK_ID)
         this.u.issueImmediateOrder("unroot")
         this.u.setFacing(angle)
+        this.u.setAnimation("stand")
 
 public function yunit.fly()
     this.uproot()
     if this.u.addAbility(AbilityIds.crowForm)
+        print("wank")
         this.u.removeAbility(AbilityIds.crowForm)
 
 public function yunit.setHeight(real height)
     this.fly()
-    y(this).flyHeight = height
+    if height < 0
+        this.initProxy()
+    if y(this).effectProxy != null
+        y(this).effectProxy.setHeight(height)
     this.u.setFlyHeight(height, 10000000)
+    y(this).flyHeight = height
     y(this).hasCustomFlyHeight = true
 
 public function yunit.getHeight() returns real
@@ -96,7 +105,10 @@ public function yunit.getHeroName() returns string
     return this.u.getProperName()
 
 public function yunit.setTint(colorA tint)
-    this.u.setVertexColor(tint)
+    if y(this).effectProxy == null
+        this.u.setVertexColor(tint)
+    else
+        y(this).effectProxy.setTint(tint)
     y(this).tint = tint
     y(this).hasCustomTint = true
 
@@ -174,6 +186,26 @@ public function yunit.setSimpleFormation(SimpleFormationData simpleFormation)
 public function yunit.getSimpleFormation() returns SimpleFormationData
     return y(this).simpleFormation
 
+public function yunit.initProxy()
+    if y(this).effectProxy == null
+        y(this).effectProxy = new DynamicEffectProxy(this.u, this.u.getModel())
+        y(this).effectProxy.copyParentProperties()
+        this.u.setVertexColor(colorA(0, 0, 0, 0))
+
+public function yunit.removeProxy()
+    if y(this).effectProxy != null
+        destroy y(this).effectProxy
+        y(this).effectProxy = null
+        this.u.setVertexColor(this.getTint())
+
+public function yunit.setPitch(angle pitch)
+    this.initProxy()
+    y(this).effectProxy.setPitch(pitch)
+
+public function yunit.setRoll(angle roll)
+    this.initProxy()
+    y(this).effectProxy.setRoll(roll)
+
 class YUnitData
     unit what
     real scale = 1
@@ -192,6 +224,9 @@ class YUnitData
     boolean hasCustomFlyHeight = false
     boolean hasCustomTint = false
     SimpleFormationData simpleFormation = null
+    DynamicEffectProxy effectProxy = null
+
+    boolean isProxy = false
 
     construct(unit what)
         this.what = what
@@ -201,9 +236,16 @@ class YUnitData
             what.setScale(1)
             what.setVertexColor(COLOR_WHITE)
 
+        if (what.isType(UNIT_TYPE_SUMMONED) and what.isType(UNIT_TYPE_MECHANICAL)) and not what.isType(UNIT_TYPE_ANCIENT)
+            what.removeAbility(AbilityIds.move)
+            UnitRemoveType(what, UNIT_TYPE_SUMMONED)
+
     ondestroy
         if not what.isSpecial()
             destroy tag
+
+        if effectProxy != null
+            destroy effectProxy
 
     static function getBy(int index) returns thistype
         return index castTo thistype

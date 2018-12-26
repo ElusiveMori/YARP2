@@ -1,0 +1,76 @@
+package EffectProxy
+
+import YARPPrelude
+import initlater YUnit
+
+constant QUAT_Z_AXIS = vec3(0, 0, 1).toQuat(1 .asAngleDegrees())
+constant QUAT_Y_AXIS = vec3(0, 1, 0).toQuat(1 .asAngleDegrees())
+constant QUAT_X_AXIS = vec3(1, 0, 0).toQuat(1 .asAngleDegrees())
+
+function normalizeModelPath(string model) returns string
+    var modelName = model.toLowerCase()
+    if not (modelName.endsWith(".mdx") or modelName.endsWith(".mdl"))
+        modelName += ".mdl"
+    return modelName
+
+public class DynamicEffectProxy
+    use LinkedListModule
+
+    private unit parent
+    private effect eff
+
+    private angle pitch = angle(0)
+    private angle roll = angle(0)
+
+    construct(unit parent, string model)
+        this.parent = parent
+        this.eff = addEffect(normalizeModelPath(model), parent.getPos())
+        this.eff.playAnimation(ANIM_TYPE_STAND)
+        copyParentProperties()
+
+    ondestroy
+        eff.destr()
+
+    function setHeight(real height)
+        eff.setHeight(height)
+
+    function setTint(colorA tint)
+        eff.setColor(tint)
+
+    function setPitch(angle pitch)
+        this.pitch = pitch
+
+    function setRoll(angle roll)
+        this.roll = roll
+
+    function copyParentProperties()
+        let parent = this.parent
+        let yParent = yunit(parent)
+
+        eff.setColor(yParent.getTint())
+        eff.setScale(yParent.getScale())
+
+    private function update()
+        if parent != null
+            eff.setPos(parent.getPos())
+            let yawQuat = vec3(0, 0, 1).toQuat(parent.getFacingAngle())
+            let rollQuat = vec3(0, 0, 1).toQuat(roll)
+            let pitchQuat = vec3(0, 1, 0).toQuat(pitch)
+            // let finalQuat = rollQuat.cross(pitchQuat.cross(yawQuat))
+            let finalQuat = yawQuat.cross(pitchQuat.cross(rollQuat))
+            eff.setOrientation(finalQuat)
+
+    protected static function updateAll()
+        let iter = DynamicEffectProxy.staticItr()
+        while iter.hasNext()
+            let proxy = iter.next()
+            proxy.update()
+
+init
+    doPeriodically(ANIMATION_PERIOD) (_) ->
+        DynamicEffectProxy.updateAll()
+
+public class StaticEffectProxy
+    use LinkedListModule
+
+    private effect eff

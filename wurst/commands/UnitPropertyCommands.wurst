@@ -1,6 +1,6 @@
 package UnitPropertyCommands
 
-import initlater YARP
+import YARP
 
 init
     execute() ->
@@ -84,3 +84,18 @@ init
 
         UnitCommand.register("addatkspd") (context, arguments, what) ->
             what.setAttackCooldown(what.getAttackCooldown() + arguments.getReal(1))
+
+        UnitCommand.register("movex") (context, arguments, what) ->
+            what.u.setPos(what.u.getPos() + vec2(arguments.getReal(1), 0))
+
+        UnitCommand.register("movey") (context, arguments, what) ->
+            what.u.setPos(what.u.getPos() + vec2(0, arguments.getReal(1)))
+
+        UnitCommand.register("move") (context, arguments, what) ->
+            what.u.setPos(what.u.getPos() + vec2(arguments.getReal(1), arguments.getReal(2)))
+
+        UnitCommand.register("pitch") (context, arguments, what) ->
+            what.setPitch(arguments.getReal(1).asAngleDegrees())
+
+        UnitCommand.register("roll") (context, arguments, what) ->
+            what.setRoll(arguments.getReal(1).asAngleDegrees())

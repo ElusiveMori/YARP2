@@ -1,0 +1,87 @@
+package XorEncryptor
+
+import Persistable
+import BigString
+import PacketIO
+import Execute
+import Bitwise
+import StringUtils
+import Base64
+import Base64Data
+import StringEncoder
+
+constant KEY = [
+	31,
+	45,
+	79,
+	82,
+	73,
+	45,
+	79,
+	82,
+	73,
+	0,
+    65,
+    87,
+    69,
+    83,
+    79,
+    77,
+    69,
+    0,
+    65,
+    78,
+    68,
+    0,
+    87,
+    72,
+    79,
+    76,
+    69,
+    83,
+    79,
+    77,
+    69
+]
+constant KEY_LENGTH = 31
+
+int keyPos = 0
+int counter
+int counterMax
+
+function transform(BigString bs) returns BigString
+    let decoder = new Base64Decoder(bs)
+    decoder.decode()
+    let encoder = new Base64Encoder(MAX_PACKET_LENGTH)
+    keyPos = 0
+    counter = 0
+    counterMax = decoder.getByteCount()
+    executeWhile(1024, () -> counter < counterMax) ->
+        encoder.pushByte(decoder.popByte().xor8(KEY[keyPos]))
+        keyPos++
+        counter++
+
+        if keyPos >= KEY_LENGTH
+            keyPos = 0
+
+    encoder.encode()
+    destroy decoder
+    return encoder.intoData()
+
+public class XorEncryptor implements PersistableMiddleware
+    override function encode(BigString bs) returns BigString
+        return transform(bs)
+
+    override function decode(BigString bs) returns BigString
+        return transform(bs)
+
+@test
+function testXorEncryptor()
+    let writer = new Base64DataWriter(16)
+    writer.writeString("Hello world.")
+    
+    let encoded = writer.intoEncoder().encode()
+    let decrypted = transform(transform(encoded))
+    let reader = new Base64DataDecoder().decode(decrypted)
+
+    reader.readString().assertEquals("Hello world.")

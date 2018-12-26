@@ -1,7 +1,9 @@
 package SaveLoad
 
 import YARPPrelude
-import AreaData
+import TerrainData
+import AtmosphericData
+import RegionSpecifier
 import UnitData
 
 public interface LoadActionCallback
@@ -12,16 +14,18 @@ public class RegionSaveData extends Persistable
     private rect area
     private vec2 origin = vec2(0, 0)
     private vec2 dimensions = vec2(0, 0)
-    private var areaData = new AreaData
+    private var terrainData = new TerrainData
     private var unitData = new MultipleUnitData
+    private var atmosphericData = new AtmosphericData
     private var valid = false
 
     construct(player owner, string name)
-        super(owner)
+        super(owner, null)
+        // super(owner, new XorEncryptor())
         this.name = name
 
     ondestroy
-        destroy areaData
+        destroy terrainData
         destroy unitData
         area.remove()
 
@@ -35,7 +39,10 @@ public class RegionSaveData extends Persistable
         writer.writeReal(dimensions.x)
         writer.writeReal(dimensions.y)
 
-        areaData.serialize(writer)
+        terrainData.serialize(writer)
+        unitData.serialize(writer)
+
+        atmosphericData.serialize(writer)
 
     override function deserialize(DataReader reader)
         origin.x = reader.readReal()
@@ -44,7 +51,10 @@ public class RegionSaveData extends Persistable
         dimensions.x = reader.readReal()
         dimensions.y = reader.readReal()
 
-        areaData.deserialize(reader)
+        terrainData.deserialize(reader)
+        unitData.deserialize(reader)
+
+        atmosphericData.deserialize(reader)
 
     override function onSaved()
         destroy this
@@ -70,18 +80,20 @@ public class RegionSaveData extends Persistable
         this.area = Rect(0, 0, 0, 0)
         load(cb)
 
-    function startPaste(vec2 offset, LoadActionCallback cb)
+    function startPaste(vec2 offset, RegionSpecifier specifier, LoadActionCallback cb)
         if valid
             area.moveTo(offset)
-            areaData.apply(area)
+            terrainData.apply(area)
             unitData.apply(area, owner)
+            atmosphericData.apply(specifier)
             cb.run()
             destroy this
 
-    function startSave(rect area)
+    function startSave(rect area, RegionSpecifier specifier)
         this.area = area.copy()
-        areaData.scan(area)
+        terrainData.scan(area)
         unitData.scan(area)
+        atmosphericData.scan(specifier)
 
         origin = area.getCenter()
         dimensions = vec2(area.width(), area.height())

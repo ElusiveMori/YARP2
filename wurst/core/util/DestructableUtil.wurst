@@ -1,0 +1,32 @@
+package DestructableUtil
+
+import Table
+
+class DestructableData
+    static constant lookup = new Table
+
+    angle orientation
+    real size
+    int variation
+
+    construct(destructable dood, angle orientation, real size, int variation)
+        lookup.saveInt(dood.getHandleId(), this castTo int)
+
+        this.orientation = orientation
+        this.size = size
+        this.variation = variation
+
+    static function get(destructable dood) returns thistype
+        return lookup.loadInt(dood.getHandleId()) castTo thistype
+
+public function createDestructableEx(int id, vec2 pos, angle orientation, real size, int variation) returns destructable
+    let dood = createDestructable(id, pos, orientation, size, variation)
+    new DestructableData(dood, orientation, size, variation)
+    return dood
+
+public function destructable.destroyEx()
+    let data = DestructableData.get(this)
+    if data != null
+        destroy data
+
+public function destructable.getSize()

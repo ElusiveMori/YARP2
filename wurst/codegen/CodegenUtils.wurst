@@ -6,8 +6,40 @@ import public ObjectIds
 import public HashMap
 import public HashSet
 import public Table
+import Assets
+import ErrorHandling
 
 public constant UNIT_TIP_COLOR = "|c00eac690"
+
+public constant REGISTRIES = InitHashtable()
+
+public constant KEY_UID = 0
+public constant KEY_REVERSE_UID = 1
+public constant KEY_MODEL = 2
+
+
+@noinline
+public function registerUid(int hash, int id)
+    if compiletime
+        if REGISTRIES.hasInt(KEY_UID, hash)
+            compileError("Hash collision!")
+    REGISTRIES.saveInt(KEY_UID, hash, id)
+
+@noinline
+public function registerReverseUid(int id, string uid)
+    REGISTRIES.saveString(KEY_REVERSE_UID, id, uid)
+
+@noinline
+public function registerModel(int id, string model)
+    REGISTRIES.saveString(KEY_MODEL, id, model)
+
+@noinline
+public function placeShop(player owner, int id, real x, real y)
+    createUnit(owner, id, vec2(x, y), angle(0))
+
+@noinline
+public function HashSet<T>.add2<T>(T obj)
+    this.add(obj)
 
 public class CodegenUtils
     static function baseUnit(int id, int baseId) returns UnitOrBuildingOrHeroDefinition
@@ -73,15 +105,35 @@ public class CodegenUtils
     static function customBuilding(int id, string modelFile, string name) returns BuildingDefinition
         return (baseUnit(id, 'ncrb') castTo BuildingDefinition)
             ..setIsaBuilding(true)
-            ..setSpeedBase(0)
+
             ..setManaMaximum(0)
             ..setPlacementPreventedBy("")
             ..setUnitClassification("mechanical,summoned")
             ..setMovementType(MovementType.None)
+            ..setSpeedBase(1)
+            ..setSpeedMinimum(1)
+            ..setSpeedMaximum(1)
 
             ..setModelFile(modelFile)
             ..setName(name)
             ..setTooltipBasic(UNIT_TIP_COLOR + name + "|r")
+            ..setPathingMap("PathTextures\\2x2Default.tga")
+
+    static function customBuilder(int id, string modelFile, string name, string units) returns UnitDefinition
+        return (baseUnit(id, 'ncrb') castTo UnitDefinition)
+            ..setName(name)
+            ..setTooltipBasic(name)
+            ..setModelFile(Units.peasant1)
+
+            ..setAnimationWalkSpeed(522)
+            ..setAnimationRunSpeed(522)
+            ..setSpeedBase(522)
+            ..setSpeedMinimum(522)
+            ..setSpeedMaximum(522)
+
+            ..setNormalAbilities("Avul")
+            ..setStructuresBuilt(units)
+            ..setRace(Race.Human)
 
     static function unitShop(int id, string modelFile, string name, string units) returns BuildingDefinition
         return customBuilding(id, modelFile, name)

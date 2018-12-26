@@ -1,15 +1,15 @@
 package RegionSpecifier
 
 import YARPPrelude
-import SaveLoad
+import initlater SaveLoad
 
 public constant REGION_SPECIFIER_ID = compiletime(UNIT_ID_GEN.next())
 public constant REGION_SPECIFIER_LOAD_ID = compiletime(ABIL_ID_GEN.next())
 constant REGION_CUTOFF_THRESHOLD = 500.
 
 public tuple terrainfog(boolean state, real min, real max, real r, real g, real b)
-
 public tuple colorcorrect(boolean state, int r, int g, int b)
+
 public class RegionSpecifier
     use LinkedListModule
 
@@ -25,7 +25,10 @@ public class RegionSpecifier
 
     private terrainfog fog = terrainfog(false, 0, 0, 0, 0, 0)
     private colorcorrect corrector = colorcorrect(false, 0, 0, 0)
-
+    private int weatherId = 0
+    private string dnc = null
+    private weathereffect weatherEffect = null
+    
     private RegionSaveData saveData
 
     construct(player owner, vec2 pos)
@@ -40,6 +43,7 @@ public class RegionSpecifier
     
     ondestroy
         lookup[what.getIndex()] = null
+        weatherEffect.remove()
         what.remove()
         area.remove()
         horizTop.destr()
@@ -55,11 +59,13 @@ public class RegionSpecifier
 
     function setWidth(real amount)
         area.resize(area.getLeftBot(), area.getLeftTop() + vec2(amount, 0))
+        updateWeather()
         snap()
         updateHintLines()
 
     function setHeight(real amount)
         area.resize(area.getLeftBot(), area.getRightBot() + vec2(0, amount))
+        updateWeather()
         snap()
         updateHintLines()
 
@@ -81,13 +87,26 @@ public class RegionSpecifier
     function setColorCorrect(colorcorrect corrector)
         this.corrector = corrector
 
+    function setDNC(string dnc)
+        this.dnc = dnc
+
+    function getDNC() returns string
+        return this.dnc
+
+    function setWeather(int id)
+        this.weatherId = id
+        updateWeather()
+    
+    function getWeather() returns int
+        return this.weatherId
+
     function initLoad(RegionSaveData data)
         saveData = data
         what.addAbility(REGION_SPECIFIER_LOAD_ID)
 
     function startLoad(LoadActionCallback cb)
-        saveData.startPaste(what.getPos(), cb)
-        destroy this
+        saveData.startPaste(what.getPos(), this, cb)
+        what.removeAbility(REGION_SPECIFIER_LOAD_ID)
 
     private function snap()
         let pos = what.getPos().toTileCenter()
@@ -106,6 +125,14 @@ public class RegionSpecifier
             horizBot.move(false, area.getLeftBot(), area.getRightBot())
             vertLeft.move(false, area.getLeftTop(), area.getLeftBot())
             vertRight.move(false, area.getRightTop(), area.getRightBot())
+
+    private function updateWeather()
+        if weatherEffect != null
+            weatherEffect.remove()
+
+        if weatherId > 0
+            weatherEffect = AddWeatherEffect(area, weatherId)
+            weatherEffect.enable()
     
     protected function onSelected()
         if localPlayer == what.getOwner()
@@ -123,6 +150,7 @@ public class RegionSpecifier
         
         snap()
         updateHintLines()
+        updateWeather()
 
         nullTimer() ->
             what.issueImmediateOrder("stop")

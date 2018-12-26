@@ -24,6 +24,10 @@ init
             case "height"
                 if regionSpecifier != null
                     regionSpecifier.setHeight(128. + 256. * arguments.getInt(2))
+            case "size"
+                if regionSpecifier != null
+                    regionSpecifier.setHeight(128. + 256. * arguments.getInt(2))
+                    regionSpecifier.setWidth(128. + 256. * arguments.getInt(2))
             case "tile"
                 if regionSpecifier != null
                     let iter = regionSpecifier.area().tileIterator()
@@ -33,7 +37,7 @@ init
                     destroy iter
             case "save"
                 let data = new RegionSaveData(owner, arguments.getString(2))
-                data.startSave(regionSpecifier.area())
+                data.startSave(regionSpecifier.area(), regionSpecifier)
             case "load"
                 let data = new RegionSaveData(owner, arguments.getString(2))
                 data.startLoad() (_) ->
@@ -63,5 +67,9 @@ init
                     case "end"
                         fog.max = arguments.getReal(3)
                 regionSpecifier.setFog(fog)
+            case "weather"
+                let name = arguments.getString(2)
+                let weatherId = StaticData.getWeatherId(name)
+                regionSpecifier.setWeather(weatherId)
                         
                         

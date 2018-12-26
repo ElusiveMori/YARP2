@@ -1,0 +1,279 @@
+package StaticData
+
+import Table
+
+constant TERRAIN_DNC = new Table()
+constant UNIT_DNC = new Table()
+constant WEATHER = new Table()
+constant VALID_TILES = new Table()
+constant DOOD_VARIATIONS = new Table()
+
+@noinline
+function terrainDnc()
+    TERRAIN_DNC.saveString(compiletime("ashenvale".getHash()), "Environment\\DNC\\DNCAshenvale\\DNCAshenValeTerrain\\DNCAshenValeTerrain.mdl")
+    TERRAIN_DNC.saveString(compiletime("dalaran".getHash()), "Environment\\DNC\\DNCDalaran\\DNCDalaranTerrain\\DNCDalaranTerrain.mdl")
+    TERRAIN_DNC.saveString(compiletime("dungeon".getHash()), "Environment\\DNC\\DNCDungeon\\DNCDungeonTerrain\\DNCDungeonTerrain.mdl")
+    TERRAIN_DNC.saveString(compiletime("felwood".getHash()), "Environment\\DNC\\DNCFelwood\\DNCFelWoodTerrain\\DNCFelWoodTerrain.mdl")
+    TERRAIN_DNC.saveString(compiletime("lordaeron".getHash()), "Environment\\DNC\\DNCLordaeron\\DNCLordaeronTerrain\\DNCLordaeronTerrain.mdl")
+    TERRAIN_DNC.saveString(compiletime("underground".getHash()), "Environment\\DNC\\DNCUnderground\\DNCUndergroundTerrain\\DNCUndergroundTerrain.mdl")
+
+@noinline
+function unitDnc()
+    UNIT_DNC.saveString(compiletime("ashenvale".getHash()), "Environment\\DNC\\DNCAshenvale\\DNCAshenValeUnit\\DNCAshenValeUnit.mdl")
+    UNIT_DNC.saveString(compiletime("dalaran".getHash()), "Environment\\DNC\\DNCDalaran\\DNCDalaranUnit\\DNCDalaranUnit.mdl")
+    UNIT_DNC.saveString(compiletime("dungeon".getHash()), "Environment\\DNC\\DNCDungeon\\DNCDungeonUnit\\DNCDungeonUnit.mdl")
+    UNIT_DNC.saveString(compiletime("felwood".getHash()), "Environment\\DNC\\DNCFelwood\\DNCFelWoodUnit\\DNCFelWoodUnit.mdl")
+    UNIT_DNC.saveString(compiletime("lordaeron".getHash()), "Environment\\DNC\\DNCLordaeron\\DNCLordaeronUnit\\DNCLordaeronUnit.mdl")
+    UNIT_DNC.saveString(compiletime("underground".getHash()), "Environment\\DNC\\DNCUnderground\\DNCUndergroundUnit\\DNCUndergroundUnit.mdl")
+
+@noinline
+function weatherCodes()
+    WEATHER.saveInt(compiletime("ashenvalerainheavy".getHash()), 'RAhr')
+    WEATHER.saveInt(compiletime("ashenvalerainlight".getHash()), 'RAlr')
+    WEATHER.saveInt(compiletime("rainheavy".getHash()), 'RAhr')
+    WEATHER.saveInt(compiletime("rainlight".getHash()), 'RAlr')
+    WEATHER.saveInt(compiletime("dalaranshield".getHash()), 'MEds')
+    WEATHER.saveInt(compiletime("dungeonbluefogheavy".getHash()), 'FDbh')
+    WEATHER.saveInt(compiletime("dungeonbluefoglight".getHash()), 'FDbl')
+    WEATHER.saveInt(compiletime("bluefogheavy".getHash()), 'FDbh')
+    WEATHER.saveInt(compiletime("bluefoglight".getHash()), 'FDbl')
+    WEATHER.saveInt(compiletime("dungeongreenfogheavy".getHash()), 'FDgh')
+    WEATHER.saveInt(compiletime("dungeongreenfoglight".getHash()), 'FDgl')
+    WEATHER.saveInt(compiletime("greenfogheavy".getHash()), 'FDgh')
+    WEATHER.saveInt(compiletime("greenfoglight".getHash()), 'FDgl')
+    WEATHER.saveInt(compiletime("dungeonredfogheavy".getHash()), 'FDrh')
+    WEATHER.saveInt(compiletime("dungeonredfoglight".getHash()), 'FDrl')
+    WEATHER.saveInt(compiletime("redfogheavy".getHash()), 'FDrh')
+    WEATHER.saveInt(compiletime("redfoglight".getHash()), 'FDrl')
+    WEATHER.saveInt(compiletime("dungeonwhitefogheavy".getHash()), 'FDwh')
+    WEATHER.saveInt(compiletime("dungeonwhitefoglight".getHash()), 'FDwl')
+    WEATHER.saveInt(compiletime("whitefogheavy".getHash()), 'FDwh')
+    WEATHER.saveInt(compiletime("whitefoglight".getHash()), 'FDwl')
+    WEATHER.saveInt(compiletime("lordaeronrainheavy".getHash()), 'RLhr')
+    WEATHER.saveInt(compiletime("lordaeronrainlight".getHash()), 'RLlr')
+    WEATHER.saveInt(compiletime("northrendblizzard".getHash()), 'SNbs')
+    WEATHER.saveInt(compiletime("northrendsnowheavy".getHash()), 'SNhs')
+    WEATHER.saveInt(compiletime("northrendsnowlight".getHash()), 'SNls')
+    WEATHER.saveInt(compiletime("outlandwindheavy".getHash()), 'WOcw')
+    WEATHER.saveInt(compiletime("outlandwindlight".getHash()), 'WOlw')
+    WEATHER.saveInt(compiletime("raysoflight".getHash()), 'LRaa')
+    WEATHER.saveInt(compiletime("raysofmoonlight".getHash()), 'LRma')
+    WEATHER.saveInt(compiletime("windheavy".getHash()), 'WNcw')
+
+@noinline
+function validTiles()
+    VALID_TILES.saveBoolean('Ldrt', true)
+    VALID_TILES.saveBoolean('Ldro', true)
+    VALID_TILES.saveBoolean('Ldrg', true)
+    VALID_TILES.saveBoolean('Lrok', true)
+    VALID_TILES.saveBoolean('Lgrs', true)
+    VALID_TILES.saveBoolean('Lgrd', true)
+    VALID_TILES.saveBoolean('Fdrt', true)
+    VALID_TILES.saveBoolean('Fdro', true)
+    VALID_TILES.saveBoolean('Fdrg', true)
+    VALID_TILES.saveBoolean('Frok', true)
+    VALID_TILES.saveBoolean('Fgrs', true)
+    VALID_TILES.saveBoolean('Fgrd', true)
+    VALID_TILES.saveBoolean('Wdrt', true)
+    VALID_TILES.saveBoolean('Wdro', true)
+    VALID_TILES.saveBoolean('Wsng', true)
+    VALID_TILES.saveBoolean('Wrok', true)
+    VALID_TILES.saveBoolean('Wgrs', true)
+    VALID_TILES.saveBoolean('Wsnw', true)
+    VALID_TILES.saveBoolean('Bdrt', true)
+    VALID_TILES.saveBoolean('Bdrh', true)
+    VALID_TILES.saveBoolean('Bdrr', true)
+    VALID_TILES.saveBoolean('Bdrg', true)
+    VALID_TILES.saveBoolean('Bdsr', true)
+    VALID_TILES.saveBoolean('Bdsd', true)
+    VALID_TILES.saveBoolean('Bflr', true)
+    VALID_TILES.saveBoolean('Bgrr', true)
+    VALID_TILES.saveBoolean('Adrt', true)
+    VALID_TILES.saveBoolean('Adrd', true)
+    VALID_TILES.saveBoolean('Agrs', true)
+    VALID_TILES.saveBoolean('Arck', true)
+    VALID_TILES.saveBoolean('Agrd', true)
+    VALID_TILES.saveBoolean('Avin', true)
+    VALID_TILES.saveBoolean('Adrg', true)
+    VALID_TILES.saveBoolean('Alvd', true)
+    VALID_TILES.saveBoolean('Cdrt', true)
+    VALID_TILES.saveBoolean('Cdrd', true)
+    VALID_TILES.saveBoolean('Cpos', true)
+    VALID_TILES.saveBoolean('Crck', true)
+    VALID_TILES.saveBoolean('Cvin', true)
+    VALID_TILES.saveBoolean('Cgrs', true)
+    VALID_TILES.saveBoolean('Clvg', true)
+    VALID_TILES.saveBoolean('Ndrt', true)
+    VALID_TILES.saveBoolean('Ndrd', true)
+    VALID_TILES.saveBoolean('Nrck', true)
+    VALID_TILES.saveBoolean('Ngrs', true)
+    VALID_TILES.saveBoolean('Nice', true)
+    VALID_TILES.saveBoolean('Nsnw', true)
+    VALID_TILES.saveBoolean('Nsnr', true)
+    VALID_TILES.saveBoolean('Ydrt', true)
+    VALID_TILES.saveBoolean('Ydtr', true)
+    VALID_TILES.saveBoolean('Yblm', true)
+    VALID_TILES.saveBoolean('Ybtl', true)
+    VALID_TILES.saveBoolean('Ysqd', true)
+    VALID_TILES.saveBoolean('Yrtl', true)
+    VALID_TILES.saveBoolean('Ygsb', true)
+    VALID_TILES.saveBoolean('Yhdg', true)
+    VALID_TILES.saveBoolean('Ywmb', true)
+    VALID_TILES.saveBoolean('Vdrt', true)
+    VALID_TILES.saveBoolean('Vdrr', true)
+    VALID_TILES.saveBoolean('Vcrp', true)
+    VALID_TILES.saveBoolean('Vcbp', true)
+    VALID_TILES.saveBoolean('Vstp', true)
+    VALID_TILES.saveBoolean('Vgrs', true)
+    VALID_TILES.saveBoolean('Vrck', true)
+    VALID_TILES.saveBoolean('Vgrt', true)
+    VALID_TILES.saveBoolean('Qdrt', true)
+    VALID_TILES.saveBoolean('Qdrr', true)
+    VALID_TILES.saveBoolean('Qcrp', true)
+    VALID_TILES.saveBoolean('Qcbp', true)
+    VALID_TILES.saveBoolean('Qstp', true)
+    VALID_TILES.saveBoolean('Qgrs', true)
+    VALID_TILES.saveBoolean('Qrck', true)
+    VALID_TILES.saveBoolean('Qgrt', true)
+    VALID_TILES.saveBoolean('Xdrt', true)
+    VALID_TILES.saveBoolean('Xdtr', true)
+    VALID_TILES.saveBoolean('Xblm', true)
+    VALID_TILES.saveBoolean('Xbtl', true)
+    VALID_TILES.saveBoolean('Xsqd', true)
+    VALID_TILES.saveBoolean('Xrtl', true)
+    VALID_TILES.saveBoolean('Xgsb', true)
+    VALID_TILES.saveBoolean('Xhdg', true)
+    VALID_TILES.saveBoolean('Xwmb', true)
+    VALID_TILES.saveBoolean('Ddrt', true)
+    VALID_TILES.saveBoolean('Dbrk', true)
+    VALID_TILES.saveBoolean('Drds', true)
+    VALID_TILES.saveBoolean('Dlvc', true)
+    VALID_TILES.saveBoolean('Dlav', true)
+    VALID_TILES.saveBoolean('Ddkr', true)
+    VALID_TILES.saveBoolean('Dgrs', true)
+    VALID_TILES.saveBoolean('Dsqd', true)
+    VALID_TILES.saveBoolean('Gdrt', true)
+    VALID_TILES.saveBoolean('Gbrk', true)
+    VALID_TILES.saveBoolean('Grds', true)
+    VALID_TILES.saveBoolean('Glvc', true)
+    VALID_TILES.saveBoolean('Glav', true)
+    VALID_TILES.saveBoolean('Gdkr', true)
+    VALID_TILES.saveBoolean('Ggrs', true)
+    VALID_TILES.saveBoolean('Gsqd', true)
+    VALID_TILES.saveBoolean('Zdrt', true)
+    VALID_TILES.saveBoolean('Zdtr', true)
+    VALID_TILES.saveBoolean('Zdrg', true)
+    VALID_TILES.saveBoolean('Zbks', true)
+    VALID_TILES.saveBoolean('Zsan', true)
+    VALID_TILES.saveBoolean('Zbkl', true)
+    VALID_TILES.saveBoolean('Ztil', true)
+    VALID_TILES.saveBoolean('Zgrs', true)
+    VALID_TILES.saveBoolean('Zvin', true)
+    VALID_TILES.saveBoolean('Idrt', true)
+    VALID_TILES.saveBoolean('Idtr', true)
+    VALID_TILES.saveBoolean('Idki', true)
+    VALID_TILES.saveBoolean('Ibkb', true)
+    VALID_TILES.saveBoolean('Irbk', true)
+    VALID_TILES.saveBoolean('Itbk', true)
+    VALID_TILES.saveBoolean('Iice', true)
+    VALID_TILES.saveBoolean('Ibsq', true)
+    VALID_TILES.saveBoolean('Isnw', true)
+    VALID_TILES.saveBoolean('Odrt', true)
+    VALID_TILES.saveBoolean('Odtr', true)
+    VALID_TILES.saveBoolean('Osmb', true)
+    VALID_TILES.saveBoolean('Ofst', true)
+    VALID_TILES.saveBoolean('Olgb', true)
+    VALID_TILES.saveBoolean('Orok', true)
+    VALID_TILES.saveBoolean('Ofsl', true)
+    VALID_TILES.saveBoolean('Oaby', true)
+    VALID_TILES.saveBoolean('Kdrt', true)
+    VALID_TILES.saveBoolean('Kfsl', true)
+    VALID_TILES.saveBoolean('Kdtr', true)
+    VALID_TILES.saveBoolean('Kfst', true)
+    VALID_TILES.saveBoolean('Ksmb', true)
+    VALID_TILES.saveBoolean('Klgb', true)
+    VALID_TILES.saveBoolean('Ksqt', true)
+    VALID_TILES.saveBoolean('Kdkt', true)
+    VALID_TILES.saveBoolean('Jdrt', true)
+    VALID_TILES.saveBoolean('Jdtr', true)
+    VALID_TILES.saveBoolean('Jblm', true)
+    VALID_TILES.saveBoolean('Jbtl', true)
+    VALID_TILES.saveBoolean('Jsqd', true)
+    VALID_TILES.saveBoolean('Jrtl', true)
+    VALID_TILES.saveBoolean('Jgsb', true)
+    VALID_TILES.saveBoolean('Jhdg', true)
+    VALID_TILES.saveBoolean('Jwmb', true)
+
+@noinline
+function doodVariations()
+    DOOD_VARIATIONS.saveInt('DTsh', 8) // dungeon tree wall
+    DOOD_VARIATIONS.saveInt('GTsh', 8) // underground tree wall
+    DOOD_VARIATIONS.saveInt('OTtw', 10) // outland tree wall
+
+    DOOD_VARIATIONS.saveInt('YTft', 2) // cityscape fall tree wall
+    DOOD_VARIATIONS.saveInt('JTct', 2) // cityscape ruined tree wall
+    DOOD_VARIATIONS.saveInt('YTst', 2) // cityscape snowy tree wall
+    DOOD_VARIATIONS.saveInt('YTct', 2) // cityscape summer tree wall
+    DOOD_VARIATIONS.saveInt('YTwt', 2) // cityscape winter tree wall
+
+    DOOD_VARIATIONS.saveInt('FTtw', 10) // fall tree wall
+    DOOD_VARIATIONS.saveInt('JTtw', 10) // dalaran tree wall
+    DOOD_VARIATIONS.saveInt('WTst', 10) // snowy tree wall
+    DOOD_VARIATIONS.saveInt('LTlt', 10) // summer tree wall
+    DOOD_VARIATIONS.saveInt('WTtw', 10) // winter tree wall
+
+    DOOD_VARIATIONS.saveInt('ATtc', 3) // ashenvale canopy tree
+    DOOD_VARIATIONS.saveInt('BTtc', 3) // barrens canopy tree
+    DOOD_VARIATIONS.saveInt('CTtc', 3) // felwood canopy tree
+    DOOD_VARIATIONS.saveInt('ITtc', 3) // icecrown canopy tree
+    DOOD_VARIATIONS.saveInt('NTtc', 3) // northrend canopy tree
+    DOOD_VARIATIONS.saveInt('ZTtc', 3) // ruins canopy tree
+
+    DOOD_VARIATIONS.saveInt('ATtr', 5) // ashenvale tree wall
+    DOOD_VARIATIONS.saveInt('BTtw', 5) // barrens tree wall
+    DOOD_VARIATIONS.saveInt('CTtr', 5) // felwood tree wall
+    DOOD_VARIATIONS.saveInt('ITtw', 5) // icecrown tree wall
+    DOOD_VARIATIONS.saveInt('NTtw', 5) // northrend tree wall
+    DOOD_VARIATIONS.saveInt('ZTtw', 5) // ruins tree wall
+
+init
+    terrainDnc()
+    unitDnc()
+    doodVariations()
+    weatherCodes()
+
+public class StaticData
+    @inline
+    static function getDoodVariations(int id) returns int
+        int result = 0
+        if DOOD_VARIATIONS.hasInt(id)
+            result = DOOD_VARIATIONS.loadInt(id)
+        return result
+
+    @inline
+    static function isValidTile(int id) returns boolean
+        boolean result = false
+        if VALID_TILES.hasBoolean(id)
+            result = VALID_TILES.loadBoolean(id)
+        return result
+
+    @inline
+    static function getWeatherId(string weather) returns int
+        int result = 0
+        if WEATHER.hasInt(weather.getHash())
+            result = WEATHER.loadInt(weather.getHash())
+        return result
+
+    @inline
+    static function getTerrainDNC(string lighting) returns string
+        string result = ""
+        if TERRAIN_DNC.hasString(lighting.getHash())
+            result = TERRAIN_DNC.loadString(lighting.getHash())
+        return result
+
+    @inline
+    static function getUnitDNC(string lighting) returns string
+        string result = ""
+        if UNIT_DNC.hasString(lighting.getHash())
+            result = UNIT_DNC.loadString(lighting.getHash())
+        return result

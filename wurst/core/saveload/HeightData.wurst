@@ -20,7 +20,6 @@ public class HeightData implements DataSerializable
 
             size++
             writer.writeInt(HeightField.getPointModifiedHeight(currentTile).toInt() + 0xFFFF div 2)
-            print(HeightField.getPointModifiedHeight(currentTile).toInt())
 
         reader = writer.intoReader()
 

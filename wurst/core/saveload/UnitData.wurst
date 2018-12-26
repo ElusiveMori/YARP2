@@ -3,6 +3,7 @@ package UnitData
 import YARPPrelude
 import initlater YUnit
 import Registry
+import initlater Permissions
 
 constant CUSTOM_HERO_NAME_FLAG = 0
 constant CUSTOM_NAME_FLAG = 1
@@ -47,27 +48,35 @@ class SingleUnitData implements DataSerializable
     private function serializeOptionals(DataWriter writer)
         var flags = bitset(0)
         if what.hasCustomName()
+            print("custom name")
             flags = flags.add(CUSTOM_NAME_FLAG)
         
         if what.hasCustomHeroName()
+            print("custom h name")
             flags = flags.add(CUSTOM_HERO_NAME_FLAG)
 
         if what.hasCustomMaxLife()
+            print("custom life")
             flags = flags.add(CUSTOM_MAX_LIFE_FLAG)
 
         if what.hasCustomMaxMana()
+            print("custom mana")
             flags = flags.add(CUSTOM_MAX_MANA_FLAG)
 
         if what.hasCustomDamage()
+            print("custom dam")
             flags = flags.add(CUSTOM_DAMAGE_FLAG)
 
         if what.hasCustomAttackCooldown()
+            print("custom atk")
             flags = flags.add(CUSTOM_ATTACK_COOLDOWN_FLAG)
 
         if what.hasCustomFlyHeight()
+            print("custom fly")
             flags = flags.add(CUSTOM_FLY_HEIGHT_FLAG)
 
         if what.hasCustomTint()
+            print("custom tint")
             flags = flags.add(CUSTOM_TINT_FLAG)
 
         writer.writeInt(flags.val)
@@ -103,6 +112,8 @@ class SingleUnitData implements DataSerializable
     override function serialize(DataWriter writer)
         serializeMandatory(writer)
         serializeOptionals(writer)
+
+        print("serialized unit")
 
     private function deserializeMandatory(DataReader reader)
         dictionaryId = reader.readShort()
@@ -148,11 +159,13 @@ class SingleUnitData implements DataSerializable
         deserializeMandatory(reader)
         deserializeOptionals(reader)
 
+        print("deserialized unit")
+
     function apply(rect area, player owner, UnitDictionary dictionary)
         let id = getIdForUid(dictionary.getUidForId(this.dictionaryId))
         let what = yunit(createUnit(owner, id, vec2(0, 0), angle(0)))
 
-        what.u.setPos(area.getCenter() + pos)
+        what.u.setXY(area.getCenter() + pos)
         what.setColor(playerColorId.toPlayerColor())
         what.setScale(size)
 
@@ -249,6 +262,7 @@ public class MultipleUnitData implements DataSerializable
 
     function scan(rect area)
         forUnitsInRect(area) (what) ->
-            let data = new SingleUnitData()
-            data.scan(area, yunit(what), dictionary)
-            list.add(data)
+            if what.isModifiableBy(what.getOwner())
+                let data = new SingleUnitData()
+                data.scan(area, yunit(what), dictionary)
+                list.add(data)

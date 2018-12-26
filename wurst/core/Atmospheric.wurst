@@ -76,12 +76,29 @@ function updateColorCorrection(LinkedList<PointRegionInfo> regions)
     SetCineFilterEndColor(r, g, b, 255)
     DisplayCineFilter(true)
 
+function updateLighting(LinkedList<PointRegionInfo> regions)
+    PointRegionInfo currentInfo = null
+
+    for info in regions
+        if info.specifier().getDNC() != null and (currentInfo == null or currentInfo.weight() < info.weight())
+            currentInfo = info
+            
+    string dnc = "lordaeron"
+
+    if currentInfo != null
+        dnc = currentInfo.specifier().getDNC()
+
+    let unitDNC = StaticData.getUnitDNC(dnc)
+    let terrainDNC = StaticData.getTerrainDNC(dnc)
+    SetDayNightModels(terrainDNC, unitDNC)
+
 function updateAtmospheric()
     let pos = getCameraTargetPosition()
     let regions = pos.getRegionSpecifiers()
 
     updateFog(regions)
     updateColorCorrection(regions)
+    updateLighting(regions)
 
     for r in regions
         destroy r

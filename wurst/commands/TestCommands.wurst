@@ -1,6 +1,7 @@
 package TestCommands
 
 import initlater YARP
+import GamecacheKeys
 
 import PacketIO
 class Box<T>
@@ -51,17 +52,45 @@ init
             execute() ->
                 PlayerSettings.get(context.owner()).load()
 
-        SimpleCommand.register("network") (context, arguments) ->
+        SimpleCommand.register("networkint") (context, arguments) ->
             let net = new Network(context.owner())
+            let count = arguments.getInt(1) - 1
+            // let value = arguments.getInt(2)
             let owner = context.owner()
 
             if localPlayer == owner
-                net.getData().writeInt(1)
-                print("sending 1")
+                for i = 0 to count
+                    let num = 163000
+                    net.getWriter().writeInt(num)
 
             net.start() (status, buffer) ->
                 if localPlayer != owner
-                    print("received " + buffer.readInt().toString())
+                    for i = 0 to count
+                        let num = buffer.readInt().toString()
+
+        SimpleCommand.register("gctest") (context, arguments) ->
+            let gc = InitGameCache("t")
+            let count = arguments.getInt(1)
+            let mkey = GamecacheKeys.get(0)
+
+            if localPlayer == context.owner()
+                for i = 0 to count
+                    let skey = GamecacheKeys.get(i)
+                    gc.saveInt(mkey, skey, 100300)
+                    gc.syncInt(mkey, skey)
+
+        SimpleCommand.register("networkstring") (context, arguments) ->
+            let net = new Network(context.owner())
+            let owner = context.owner()
+            let value = arguments.getString(1)
+
+            if localPlayer == owner
+                net.getWriter().writeString(value)
+                print("sending" + value)
+
+            net.start() (status, buffer) ->
+                if localPlayer != owner
+                    print("received " + buffer.readString())
 
         SimpleCommand.register("splittest") (context, arguments) ->
             let nlparser = new LineSplitterParser(arguments.getString(2), arguments.getInt(1))
@@ -147,3 +176,9 @@ init
 
             let point = context.owner().getSpawner().getPos().getTile()
             HeightField.plateau(point, size)
+
+        UnitCommand.register("sfxtest") (context, arguments, what) ->
+            let modelFile = "units\\human\\Peasant\\Peasant.mdl"
+
+            let sfx = addEffect(modelFile, what.u.getPos())
+            sfx.setHeight(-50)
