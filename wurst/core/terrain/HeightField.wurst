@@ -15,7 +15,7 @@ public class HeightField
             heightFieldOriginal.saveReal(point.getIdX(), point.getIdY(), point.getHeight())
             heightFieldModified.saveReal(point.getIdX(), point.getIdY(), 0.)
             
-        destroy iter
+        destroy it
 
     @inline
     static function makeDeform(tile point, real value)

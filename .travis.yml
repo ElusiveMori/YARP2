@@ -4,11 +4,16 @@ jdk: oraclejdk8
 before_install: 
   - mkdir $HOME/.wurst/
   - cd $HOME/.wurst
-  - sudo apt-get install -y wine
 
 install:
   - wget http://peeeq.de/hudson/job/Wurst/lastSuccessfulBuild/artifact/downloads/wurstpack_compiler.zip
   - unzip -qq -n wurstpack_compiler.zip -d $HOME/.wurst
+  - cd $TRAVIS_BUILD_DIR
+  - mkdir -p _build/dependencies
+  - cd _build/dependencies
+  - git clone https://github.com/SamuelMoriarty/WurstStdlib2.git
+  - cd WurstStdlib2
+  - git checkout yarp-fork
 
 before_script: cd $TRAVIS_BUILD_DIR 
 
