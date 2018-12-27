@@ -4,6 +4,8 @@ YARP was a freeform sandbox roleplay custom map, in the vein of RotRP and SotDRP
 
 Since vJass is just an extension of the JASS scripting language, it carries many of the same limitations that can make development slow and cubersome. This was one of the main reasons that the development of YARP was ceased. YARP2 seeks to fix this by being written in Wurst, a more recent language that compiles into JASS and makes many more recent programing language constructions avaiable to map coders.
 
+The YARP community is a group of like-minded roleplayers who enjoy sandbox-style roleplay. We have our own **Discord** server, and you are [invited!](https://discord.gg/TYRKMNf "Discord Invitation")
+
 
 ## Setting up
 
@@ -15,9 +17,14 @@ First, download the WurstSetup tool from https://wurstlang.org/.
 4. `git remote add mori-std git@github.com:SamuelMoriarty/WurstStdlib2.git`
 5. `git fetch --all`
 6. `git checkout yarp-fork`
-7. open vs code, press ctrl-shift-p, type "runmap", the wurst run map command should pop up, try running it
+7. open VS Code, press ctrl-shift-p, type "runmap", the wurst run map command should pop up, try running it
 
 If you correctly completed these steps, the map should compile and open. Don't forget to specify the path to your wc3 installation in the WurstSetup tool.
+
+### Custom Imports
+YARP2 uses many custom models and textures. However, they are not included in the GitHub repository, as they are binary files. You can find them [here](https://drive.google.com/uc?export=download&id=1ftuvctVGbd7WEi-hdM5rPlOed0qWFsfU "Yarp Resources").
+
+Simply extract the contents of the zip file to the path `imports/` inside of the repository.
 
 ## Contributing
 
