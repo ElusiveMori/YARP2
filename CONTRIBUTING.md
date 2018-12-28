@@ -30,7 +30,7 @@ UnitCommand.register("remove") (context, arguments, what) ->
 ```
 
 ```
-CommandRegistry.register("test") (context, arguments) ->
+SimpleCommand.register("test") (context, arguments) ->
     print("arg1:" + arguments.getString(1))
     print("arg2:" + arguments.getString(2))
     print("arg3:" + arguments.getString(3))
