@@ -32,7 +32,9 @@ init
             what.setHeight(what.getHeight() + arguments.getReal(1))
 
         UnitCommand.register("name") (context, arguments, what) ->
-            what.setName(arguments.getRest(true))
+            let name = arguments.getRest(true)
+            if name != null and name != ""
+                what.setName(name)
 
         UnitCommand.register("heroname") (context, arguments, what) ->
             what.setHeroName(arguments.getRest(true))
