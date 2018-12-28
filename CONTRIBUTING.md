@@ -20,6 +20,10 @@ This section serves as a sort of light documentation for the systems I currently
 ## Command System - `/wurst/core/command/`
 There's a command system, full with parsers, wrappers and utilities already implemented in YARP2.
 
+The command systems aims to replicate the syntax of the command system in YARP1, so you can use that as a reference, though some features are still missing (most notably, alias, macros and wait commands).
+
+https://github.com/SamuelMoriarty/Yet-Another-RolePlay/wiki/Command-Handling
+
 ### Using Wrappers
 
 Registering a command is very simple. There are 2 wrappers in `CommandWrappers.wurst`, designed for registering simple unit-based and ordinary commands. For example:
@@ -36,9 +40,9 @@ SimpleCommand.register("test") (context, arguments) ->
     print("arg3:" + arguments.getString(3))
 ```
 
-Both variants share 2 common arguments - `context` and `arguments`. `context` is an instance of the `CommandContext` class, which can be used to get:
-* The player who issued the command, via `context.owner()`
-* The selection of the player at the time of running, via `context.selection()`
+Both variants share 2 common arguments - `context` and `arguments`. `context` is an instance of the `CommandContext` class, which can be used to:
+* Get the player who issued the command, via `context.owner()`
+* Get the selection of the player at the time of running, via `context.selection()`
 * Run another command, via `context.run(...)`
   
 `arguments` is an instance of the `Arguments` class, which is a convenience wrapper over the internal logic of how YARP2 parses commands and arguments, which can be used to get:
@@ -48,7 +52,7 @@ Both variants share 2 common arguments - `context` and `arguments`. `context` is
   * Assume input is `cmd This is a string`; `arguments.getRest(true)`  and `arguments.getRest(false)` will both return `"This is a string"`.
   * `arguments.getRest(true)` will also eliminate any duplicate whitespace.
 
-Another feature of the `Arguments` wrapper is that it directly integrates YARP2's custom scripting language. It's a very simple, LISP-like expression-based language, which can be used to write small expressions in arguments (like sin, cod, and rand) and set/get variables. The implementation lies in `Scripting.wurst`, and there are some examples in unit tests.
+Another feature of the `Arguments` wrapper is that it directly integrates YARP2's custom scripting language. It's a very simple, LISP-like expression-based language, which can be used to write small expressions in arguments (like sin, cos, and rand) and set/get variables. The implementation lies in `Scripting.wurst`, and there are some examples in unit tests.
 
 ### Not using wrappers
 
