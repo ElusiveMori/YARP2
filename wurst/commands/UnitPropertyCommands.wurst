@@ -1,6 +1,7 @@
 package UnitPropertyCommands
 
 import YARP
+import aUnit
 
 init
     execute() ->
@@ -96,6 +97,16 @@ init
 
         UnitCommand.register("pitch") (context, arguments, what) ->
             what.setPitch(arguments.getReal(1).asAngleDegrees())
+
+        UnitCommand.register("attach") (context, arguments, what) ->
+            let a = arguments.getString(1)
+            let b = arguments.getReal(2)
+            let c = arguments.getReal(3)
+            let d = arguments.getReal(4)
+            let e = arguments.getBool(5)
+            print(a + " " + b.toString() + " " + c.toString() + " " + d.toString() + " " + e.toString())
+            aUnit.AttachUnit(CreateUnitByName(what.u.getOwner(), a, 0, 0, 0), null, what.u, b, c, d, 0, e)
+            
 
         UnitCommand.register("roll") (context, arguments, what) ->
             what.setRoll(arguments.getReal(1).asAngleDegrees())

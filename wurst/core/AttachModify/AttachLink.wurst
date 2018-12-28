@@ -1,0 +1,54 @@
+package AttachLink
+
+import public HashSet
+import public initlater aUnit
+
+public class AttachLink
+    
+
+    real cooldown
+    real cooldownReset
+    trigger turretTrigger
+    boolean dynamicFacing
+    boolean updateFacing
+    boolean isHidden
+    real distance
+    real angle
+    real zOffset
+    real offsetFix
+    real angleRate
+    real facing
+    real idleAngle
+    boolean staticAngle
+    aUnit host
+    aUnit guest
+    effect fx
+
+    
+
+
+        
+
+    function g_Destroy()
+        this.staticAngle = false
+        this.dynamicFacing = false
+        this.updateFacing = false
+        this.isHidden = false
+        this.angleRate = 0
+        this.idleAngle = 0
+
+    construct(unit guest, effect fx, unit host, real angle, real distance, real zOffset, bool staticAngle)
+        this.guest = new aUnit()
+        this.host = new aUnit()
+        this.guest.u = guest
+        this.fx = fx
+        this.host.u = host
+        this.angle = angle
+        this.distance = distance
+        this.zOffset = zOffset
+        this.staticAngle = staticAngle
+        print("New linked formed with..")
+        print("distance: " + distance.toString())
+        print("angle: " + angle.toString())
+        print("zOffset: " + zOffset.toString())
+        print("staticAngle: " + staticAngle.toString())
