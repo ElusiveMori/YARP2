@@ -41,4 +41,4 @@ Working with more people is a great way of getting things done faster. If you wo
 
 There's also a contribution guide, which details requirements for code contribution, as well as some pointers with the project.
 
-[Contribtuion Guide](CONTRIBUTING.md)
+[Contribution Guide](CONTRIBUTING.md)
