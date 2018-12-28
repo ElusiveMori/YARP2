@@ -38,3 +38,7 @@ Working with more people is a great way of getting things done faster. If you wo
 ### Community work:
 * **Promotion**: This is something that anyone can do - host lobbies during active hours, make campaigns, invite people and friends. Please. This is important.
 * **Website:** However, having a proper website for YARP would be really, really nice. If you have experience with web development and would like to help, please get in touch!
+
+There's also a contribution guide, which details requirements for code contribution, as well as some pointers with the project.
+
+[Contribtuion Guide](CONTRIBUTING.md)

@@ -43,7 +43,6 @@ import public Parsers
 import public PlayerUtil
 import public RectTileIterator
 import public SelectionUtil
-import public SequenceGenerator
 import public TextTagUtil
 import public YPrinting
 import public XorEncryptor
