@@ -1,0 +1,72 @@
+package aUnit
+
+import public HashSet
+import public initlater AttachLink
+import public Maths
+import public Angle
+
+/*
+
+A Unit is the unit that is in the ConnectionStorage container that is periodically updated
+AttachLink is the link which holds the host and guest aUnits as well as their metadata
+
+*/
+public class aUnit
+    unit u
+    static HashSet<AttachLink> ConnectionStorage
+    HashSet<AttachLink> guestConnections
+    //run in miscinit
+    static function init_Connection_Storage(timer clock, real timeout)
+        ConnectionStorage = new HashSet<AttachLink>()
+        TimerStart(clock, timeout, true, function updateStoredConnections)
+
+    static function updateStoredConnections()
+        HLIterator<AttachLink> iterator = ConnectionStorage.iterator()
+        while iterator.hasNext()
+            AttachLink currentLink = iterator.next()
+            unit guest = currentLink.guest.u
+            unit host = currentLink.host.u
+            real x = host.getX()
+            real y = host.getY()
+            real z = BlzGetLocalUnitZ(host)
+            real f = GetUnitFacing(host)
+            real xNew
+            real yNew
+            real zNew
+            if(currentLink.staticAngle)
+                xNew = x + Cos(currentLink.angle * DEGTORAD) * currentLink.distance
+                yNew = y + Sin(currentLink.angle * DEGTORAD) * currentLink.distance
+                zNew = z
+            else
+                xNew = x + Cos(currentLink.angle * DEGTORAD + f * DEGTORAD) * currentLink.distance
+                yNew = y + Sin(currentLink.angle * DEGTORAD + f * DEGTORAD) * currentLink.distance
+                zNew = z
+            SetUnitX(guest, xNew)
+            SetUnitY(guest, yNew)
+            SetUnitFlyHeight(guest, zNew, 0)
+
+    /*function update_Guests()
+        //update guests
+        HLIterator<AttachLink> iterator = guestConnections.iterator()
+        while iterator.hasNext()
+            AttachLink currentLink = iterator.next()
+            aUnit guest = currentLink.guest
+            aUnit host = currentLink.host
+            if(currentLink.staticAngle)
+                guest.u.setX(host.u.getX() + currentLink.distance * Cos(currentLink.angle * DEGTORAD))
+                guest.u.setY(host.u.getY() + currentLink.distance * Sin(currentLink.angle * DEGTORAD))    
+            else
+                real angle = currentLink.angle + host.u.getFacingAngle().radians()
+                guest.u.setX(host.u.getX() + currentLink.distance * Cos(currentLink.angle * DEGTORAD + host.u.getFacingAngle().radians()))
+                guest.u.setY(host.u.getY() + currentLink.distance * Sin(currentLink.angle * DEGTORAD + host.u.getFacingAngle().radians()))  */
+
+    static function AttachObject(unit g, effect fx, unit h, real angle, real distance, real zOffset, real offsetFix, boolean staticAngle) returns AttachLink
+        if h == null or (g == null and fx == null)
+            return null
+        AttachLink rVal = new AttachLink(g,fx,h,angle,distance,zOffset,staticAngle)
+        ConnectionStorage.add(rVal)
+        return rVal
+            
+
+    static function AttachUnit(unit guest, effect fx, unit u, real angle, real distance, real zOffset, real offsetFix, boolean staticAngle) returns AttachLink
+        return AttachObject(guest, fx, u, angle, distance, zOffset, offsetFix, staticAngle)
