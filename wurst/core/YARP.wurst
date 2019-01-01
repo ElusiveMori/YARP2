@@ -17,7 +17,6 @@ import public RegionSpecifier
 import public Registry
 import public Scripting
 import public SelectionUtil
-import public SequenceGenerator
 import public Spawner
 import public TextTagUtil
 import public UnitTag
