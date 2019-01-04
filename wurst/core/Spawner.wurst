@@ -1,6 +1,7 @@
 package Spawner
 
 import YARPPrelude
+import HeightTools
 
 public constant SPAWNER_ID = compiletime(UNIT_ID_GEN.next())
 public constant CARGO_HOLD_ID = compiletime(ABIL_ID_GEN.next())
@@ -28,6 +29,8 @@ public class Spawner
             let pos = getOrderPos()
             let dir = (pos - spawner.getPos()).norm()
             spawner.setPos(pos + dir * 512)
+        
+        TerrainTools.onPointOrder(order)
 
     protected static function onSpawnerTargetOrder()
         let spawner = GetOrderedUnit()
@@ -87,7 +90,7 @@ init
         ..setTooltipBasic("")
         ..setTooltipExtended("This is a spawner.")
         ..setUnitClassification("peon")
-        ..setNormalAbilities(commaList(AbilityIds.invulnerable, CARGO_HOLD_ID, CARGO_LOAD_ID, CARGO_UNLOAD_ID))
+        ..setNormalAbilities(commaList(AbilityIds.invulnerable, CARGO_HOLD_ID, CARGO_LOAD_ID, CARGO_UNLOAD_ID, HEIGHT_BOOK_ID))
         ..setAnimationBlendTimeseconds(0)
         ..setAnimationCastBackswing(0)
         ..setAnimationCastPoint(0)

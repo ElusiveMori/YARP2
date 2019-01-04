@@ -2,12 +2,26 @@ package HeightTools
 
 import initlater YARP
 
-constant HEIGHT_BOOK_ID = compiletime(ABIL_ID_GEN.next())
+
+public constant HEIGHT_BOOK_ID = compiletime(ABIL_ID_GEN.next())
 constant HEIGHT_BOOK_ORDER = compiletime(getNewOrder())
 
 
+constant RAISE_ID = compiletime(ABIL_ID_GEN.next())
+constant RAISE_ORDER = compiletime(getNewOrder())
+constant RAISE_ORDER_ID = OrderId(RAISE_ORDER)
 
-// @compiletime function generateTerrainTools()
+
+public class TerrainTools
+
+    static function onPointOrder(int order)
+        if order == RAISE_ORDER_ID
+            BJDebugMsg("Test")
+            HeightField.bump(getOrderPos().getTile(), 400, 40)
+            
+
+
+@compiletime function generateTerrainTools()
 //     new ChannelAbilityPreset(REGION_SPECIFIER_LOAD_ID, 1, true)
 //         ..presetTargetTypes(Targettype.NONE)
 //         ..setName("Load!")
@@ -16,9 +30,17 @@ constant HEIGHT_BOOK_ORDER = compiletime(getNewOrder())
 //         ..setIconNormal(Icons.bTNArthas)
 //         ..setCastingTime(1, 0)
 
-//     new AbilityDefinitionSpellBook(HEIGHT_BOOK_ID)
-//         ..setLevels(1)
-//         ..setSpellList(1, "")
-//         ..setMaximumSpells(1, 1)
-//         ..setMinimumSpells(1, 1)
-//         ..setBaseOrderID(1, HEIGHT_BOOK_ORDER)
+    new AbilityDefinitionSpellBook(HEIGHT_BOOK_ID)
+
+        ..setLevels(1)
+        ..setTooltipNormal(1, "Terrain Tools")
+        ..setSpellList(1, commaList(RAISE_ID))
+        ..setMaximumSpells(1, 1)
+        ..setMinimumSpells(1, 1)
+        ..setBaseOrderID(1, HEIGHT_BOOK_ORDER)
+
+    new ChannelAbilityPreset(RAISE_ID, 1, true)
+        ..presetTargetTypes(Targettype.POINT)
+        ..setBaseOrderID(1, RAISE_ORDER)
+        //..setCooldown(1, 0)
+        
