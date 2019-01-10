@@ -12,22 +12,22 @@ class Box<T>
 
 init
     execute() ->
-        CommandRegistry.register("test") (context, arguments) ->
-            print("arg1:" + arguments.getString(1))
-            print("arg2:" + arguments.getString(2))
-            print("arg3:" + arguments.getString(3))
+        // CommandRegistry.register("test") (context, arguments) ->
+        //     print("arg1:" + arguments.getString(1))
+        //     print("arg2:" + arguments.getString(2))
+        //     print("arg3:" + arguments.getString(3))
 
-        CommandRegistry.register("exec") (context, arguments) ->
-            let success = try() -> 
-                let eee = Niya.parse(arguments.getString(1))
-                if eee.error != null
-                    print(eee.error)
-                else
-                    print(eee.expr.eval(context.scriptContext()))
-                print("Done!")
-            if not success
-                print("We fucked up")
-                print(lastError)
+        // CommandRegistry.register("exec") (context, arguments) ->
+        //     let success = try() -> 
+        //         let eee = Niya.parse(arguments.getString(1))
+        //         if eee.error != null
+        //             print(eee.error)
+        //         else
+        //             print(eee.expr.eval(context.scriptContext()))
+        //         print("Done!")
+        //     if not success
+        //         print("We fucked up")
+        //         print(lastError)
 
         SimpleCommand.register("spawn") (context, arguments) ->
             let idString = arguments.getString(2)
@@ -40,13 +40,9 @@ init
             for i = 0 to arguments.getInt(1) - 1
                 createUnit(context.owner(), id, vec2(0, 0), angle(0))
 
-        SimpleCommand.register("n2") (context, argument) ->
-            var s = ""
-            for i = 0 to 1023
-                s += "a"
-            context.owner().setName(s)
-            print(context.owner().getName())
-            print(context.owner().getName().length())
+        SimpleCommand.register("n1") (context, argument) ->
+            let asdf = GetRandomInt(10, 10).toReal()
+            print(asdf / 0.0)
 
         SimpleCommand.register("loadme") (context, argument) ->
             execute() ->

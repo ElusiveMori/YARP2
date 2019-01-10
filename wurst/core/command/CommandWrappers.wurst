@@ -1,30 +1,58 @@
 package CommandWrappers
 
+import YARPPrelude
 import initlater Command
 import Permissions
 import YUnit
 
-public abstract class SimpleCommand implements Command
-    override function run(CommandContext context, Arguments arguments)
-        callback(context, arguments)
-        context.continue()
+public class CommandRegistrator
+	private string helpText
+	private LinkedList<CommandPermission> permissions = new LinkedList<CommandPermission>
+	private bitset flags = bitset(0)
+	
+	function withHelp(string helpText)
+		this.helpText = helpText
 
-    abstract function callback(CommandContext context, Arguments arguments)
+	function withPermissions(vararg string permissions)
+		for permission in permissions
+			this.permissions.push(new CommandPermission(permission))
 
-    static function register(string command, SimpleCommand callback)
-        CommandRegistry.register(command, callback)
+	function withFlag(CommandExecutionFlag flag)
+		this.flags = this.flags.add(flag castTo int)
 
-public abstract class UnitCommand implements Command
-    override function run(CommandContext context, Arguments arguments)
-        let who = context.owner()
+	function register(string name, CommandCallback callback)
+		let command = new Command(name, helpText, permissions, flags, callback)
+		CommandRegistry.register(name, command)
 
-        for what in context.selection()
-            if what.isModifiableBy(who)
-                callback(context, arguments, yunit(what))
-        
-        context.continue()
+	function registerUnit(string name, UnitCommand callback)
+		let command = new Command(name, helpText, permissions, flags, callback)
+		CommandRegistry.register(name, command)
+			
+	function registerSimple(string name, SimpleCommand callback)
+		let command = new Command(name, helpText, permissions, flags, callback)
+		CommandRegistry.register(name, command)
 
-    abstract function callback(CommandContext context, Arguments arguments, yunit what)
+public abstract class SimpleCommand implements CommandCallback
+	override function run(CommandContext context, Arguments arguments)
+		callback(context, arguments)
+		context.continue()
 
-    static function register(string command, UnitCommand callback)
-        CommandRegistry.register(command, callback)
+	abstract function callback(CommandContext context, Arguments arguments)
+
+	static function register(string command, SimpleCommand callback) returns Command
+		return null
+
+public abstract class UnitCommand implements CommandCallback
+	override function run(CommandContext context, Arguments arguments)
+		let who = context.owner()
+
+		for what in context.selection()
+			if what.isModifiableBy(who)
+				callback(context, arguments, yunit(what))
+		
+		context.continue()
+
+	abstract function callback(CommandContext context, Arguments arguments, yunit what)
+
+	static function register(string command, UnitCommand callback) returns Command
+		return null

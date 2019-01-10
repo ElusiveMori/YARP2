@@ -3,7 +3,9 @@ package MiscCommands
 import YARP
 
 init
-    SimpleCommand.register("form") (context, arguments) ->
+    let registrator = new CommandRegistrator()
+
+    registrator.registerSimple("form") (context, arguments) ->
         let subCommand = arguments.getString(1)
         let settings = context.owner().getFormationSettings()
         switch subCommand
@@ -18,3 +20,19 @@ init
             case "y"
                 let arg = arguments.getReal(2)
                 settings.rectVertSpacing = arg
+
+    registrator.registerSimple("alias") (context, arguments) ->
+        let aliasName = arguments.getString(1)
+        let aliasExpansion = arguments.getRest(true)
+
+        let check = CommandUtils.registerAlias(context.owner(), aliasName, aliasExpansion)
+        if check.status != CollisionCheck.NO_COLLISION
+            YPrint.warn(context.owner(), "could not create alias: " + check.message)
+
+    registrator.registerSimple("macro") (context, arguments) ->
+        let macroName = arguments.getString(1)
+        let macroExpansion = arguments.getRest(false)
+
+        let check = CommandUtils.registerMacro(context.owner(), macroName, macroExpansion)
+        if check.status != CollisionCheck.NO_COLLISION
+            YPrint.warn(context.owner(), "could not create macro: " + check.message)

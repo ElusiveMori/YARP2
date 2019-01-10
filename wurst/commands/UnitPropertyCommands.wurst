@@ -4,55 +4,66 @@ import YARP
 
 init
     execute() ->
-        UnitCommand.register("remove") (context, arguments, what) ->
+        let registrator = new CommandRegistrator()
+
+        registrator.withFlag(CommandExecutionFlag.UNIT_MODIFY)
+        
+        registrator.withHelp("Usage: remove\nRemoves unit.")
+        registrator.registerUnit("remove") (context, arguments, what) ->
             what.remove()
 
-        UnitCommand.register("kill") (context, arguments, what) ->
+        registrator.withHelp("Usage: kill\nKills unit.")
+        registrator.registerUnit("kill") (context, arguments, what) ->
             what.kill()
 
-        UnitCommand.register("explode") (context, arguments, what) ->
+        registrator.withHelp("Usage: explode\nExplodes unit.")
+        registrator.registerUnit("explode") (context, arguments, what) ->
             what.explode()
 
-        UnitCommand.register("size") (context, arguments, what) ->
+        registrator.withHelp("Usage: size X\nChanges unit size to X% of default size.")
+        registrator.registerUnit("size") (context, arguments, what) ->
             what.setScale(arguments.getReal(1))
 
-        UnitCommand.register("sized") (context, arguments, what) ->
+        registrator.withHelp("Usage: sized X\nChanges unit size by X% relative to current size.")
+        registrator.registerUnit("sized") (context, arguments, what) ->
             what.setScale(what.getScale() + arguments.getReal(1))
 
-        UnitCommand.register("fa") (context, arguments, what) ->
+        registrator.withHelp("Usage: fa X\nSets the facing angle of unit to X.")
+        registrator.registerUnit("fa") (context, arguments, what) ->
             what.setFacing(arguments.getReal(1).asAngleDegrees())
 
-        UnitCommand.register("fd") (context, arguments, what) ->
+        registrator.withHelp("Usage: fd X\nRotates the unit by X degrees relative to current facing.")
+        registrator.registerUnit("fd") (context, arguments, what) ->
             what.setFacing(what.getFacing() + arguments.getReal(1).asAngleDegrees())
 
-        UnitCommand.register("fly") (context, arguments, what) ->
+        registrator.withHelp("Usage: fly X\nSets the fly height of unit to X.\nSupports negative values.")
+        registrator.registerUnit("fly") (context, arguments, what) ->
             what.setHeight(arguments.getReal(1))
 
-        UnitCommand.register("flyd") (context, arguments, what) ->
+        registrator.withHelp("Usage: flyd X\nChanges the fly height of unit by X relative to current fly height.\nSupports negative values.")
+        registrator.registerUnit("flyd") (context, arguments, what) ->
             what.setHeight(what.getHeight() + arguments.getReal(1))
 
-        UnitCommand.register("name") (context, arguments, what) ->
+        registrator.withHelp("Usage: name X\nChanges the name of unit to X.")
+        registrator.registerUnit("name") (context, arguments, what) ->
             let name = arguments.getRest(true)
             if name != null and name != ""
                 what.setName(name)
 
-        UnitCommand.register("heroname") (context, arguments, what) ->
+        registrator.withHelp("Usage: heroname X\nChanges the hero name of unit to X.")
+        registrator.registerUnit("heroname") (context, arguments, what) ->
             what.setHeroName(arguments.getRest(true))
 
-        UnitCommand.register("tint") (context, arguments, what) ->
+        registrator.withHelp("Usage: tint R G B\nSets the tint of unit to the specified RGB value.\nValues are in 0-100 range.")
+        registrator.registerUnit("tint") (context, arguments, what) ->
             let r = ((arguments.getReal(1) / 100) * 255).toInt()
             let g = ((arguments.getReal(2) / 100) * 255).toInt()
             let b = ((arguments.getReal(3) / 100) * 255).toInt()
             let a = ((arguments.getReal(4) / 100) * 255).toInt()
             what.setTint(colorA(r, g, b, a))
 
-        UnitCommand.register("color") (context, arguments, what) ->
-            what.setColor(getColorFromString(arguments.getRest(true)))
-
-        UnitCommand.register("say") (context, arguments, what) ->
-            what.getTag().info.addSay(arguments.getRest(false))
-
-        UnitCommand.register("color") (context, arguments, what) ->
+        registrator.withHelp("Usage: color X\nSets the color of unit.\nCan be a number from 0 to 24, or a string.")
+        registrator.registerUnit("color") (context, arguments, what) ->
             let arg = arguments.getString(1)
 
             playercolor pc
@@ -63,41 +74,54 @@ init
 
             what.setColor(pc)
 
-        UnitCommand.register("setlife") (context, arguments, what) ->
+        registrator.withHelp("Usage: setlife X\n. Sets the maximum life of unit to X.")
+        registrator.registerUnit("setlife") (context, arguments, what) ->
             what.setMaxLife(arguments.getInt(1))
 
-        UnitCommand.register("setmana") (context, arguments, what) ->
+        registrator.withHelp("Usage: setmana X\n. Sets the maximum mana of unit to X.")
+        registrator.registerUnit("setmana") (context, arguments, what) ->
             what.setMaxMana(arguments.getInt(1))
 
-        UnitCommand.register("setdam") (context, arguments, what) ->
+        registrator.withHelp("Usage: setdam X\n. Sets the damage of unit to X.")
+        registrator.registerUnit("setdam") (context, arguments, what) ->
             what.setDamage(arguments.getInt(1))
 
-        UnitCommand.register("setatkspd") (context, arguments, what) ->
+        registrator.withHelp("Usage: setatkspeed X\n. Sets the base attack speed of unit to X, where X is the time in seconds between each attack.")
+        registrator.registerUnit("setatkspd") (context, arguments, what) ->
             what.setAttackCooldown(arguments.getReal(1))
 
-        UnitCommand.register("addlife") (context, arguments, what) ->
+        registrator.withHelp("Usage: addlife X\n. Adds X to the maximum life of unit.")
+        registrator.registerUnit("addlife") (context, arguments, what) ->
             what.setMaxLife(what.getMaxLife().toInt() + arguments.getInt(1))
 
-        UnitCommand.register("addmana") (context, arguments, what) ->
+        registrator.withHelp("Usage: addmana X\n. Adds X to the maximum mana of unit.")
+        registrator.registerUnit("addmana") (context, arguments, what) ->
             what.setMaxMana(what.getMaxMana().toInt() + arguments.getInt(1))
 
-        UnitCommand.register("adddam") (context, arguments, what) ->
+        registrator.withHelp("Usage: adddam X\n. Adds X to the damage of unit.")
+        registrator.registerUnit("adddam") (context, arguments, what) ->
             what.setDamage(what.getDamage() + arguments.getInt(1))
 
-        UnitCommand.register("addatkspd") (context, arguments, what) ->
+        registrator.withHelp("Usage: addatkspd X\n. Adds X to the attack speed of unit, where X is the time in seconds between each attack.")
+        registrator.registerUnit("addatkspd") (context, arguments, what) ->
             what.setAttackCooldown(what.getAttackCooldown() + arguments.getReal(1))
 
-        UnitCommand.register("movex") (context, arguments, what) ->
+        registrator.withHelp("Usage: movex X\n. Moves unit by X units on the X axis.")
+        registrator.registerUnit("movex") (context, arguments, what) ->
             what.u.setPos(what.u.getPos() + vec2(arguments.getReal(1), 0))
 
-        UnitCommand.register("movey") (context, arguments, what) ->
+        registrator.withHelp("Usage: movey X\n. Moves unit by X units on the Y axis.")
+        registrator.registerUnit("movey") (context, arguments, what) ->
             what.u.setPos(what.u.getPos() + vec2(0, arguments.getReal(1)))
 
-        UnitCommand.register("move") (context, arguments, what) ->
+        registrator.withHelp("Usage: move X Y\n. Moves unit by X units on the X axis, and Y units on the Y axis.")
+        registrator.registerUnit("move") (context, arguments, what) ->
             what.u.setPos(what.u.getPos() + vec2(arguments.getReal(1), arguments.getReal(2)))
 
-        UnitCommand.register("pitch") (context, arguments, what) ->
+        registrator.withHelp("Usage: pitch X\n. Pitches unit by X degrees.")
+        registrator.registerUnit("pitch") (context, arguments, what) ->
             what.setPitch(arguments.getReal(1).asAngleDegrees())
 
-        UnitCommand.register("roll") (context, arguments, what) ->
+        registrator.withHelp("Usage: roll X\n. Rolls unit by X degrees.")
+        registrator.registerUnit("roll") (context, arguments, what) ->
             what.setRoll(arguments.getReal(1).asAngleDegrees())

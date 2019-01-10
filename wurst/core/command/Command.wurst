@@ -3,125 +3,68 @@ package Command
 import YARPPrelude
 import public Scripting
 import public CommandWrappers
+import public Argument
+import public AliasMacro
 
-public interface Command
+public interface CommandCallback
 	function run(CommandContext context, Arguments arguments)
+
+/**
+	Each command context is assigned several execution flags,
+	which dictate which commands may or may not be executed
+	in it.
+
+	SPAWN - Indicates that this command may spawn units.
+	UNIT_MODIFY - Indicates that this command may modify units.
+	EXECUTE_COMMAND - Indicates that this command may execute other commands.
+	DIRECT - Indicates that this command may only be directly called by the player, never from any other commands.
+**/
+public enum CommandExecutionFlag
+	SPAWN
+	UNIT_MODIFY
+	EXECUTE_COMMAND
+	DIRECT
+
+public class CommandPermission
+	private string permission
+
+	construct(string permission)
+		this.permission = permission
+
+	function getName() returns string
+		return permission
+
+public class Command
+	private string command
+	private string helpText
+	private CommandCallback callback
+	private LinkedList<CommandPermission> permissions
+	private bitset flags
+
+	construct(string command, string helpText, LinkedList<CommandPermission> permissions, bitset flags, CommandCallback callback)
+		this.command = command
+		this.helpText = helpText
+		this.permissions = permissions
+		this.flags = flags
+		this.callback = callback
+
+	function getCallback() returns CommandCallback
+		return callback
 
 public class CommandRegistry
 	private static constant registry = new HashMap<int, Command>
+	private static constant commands = new LinkedList<string>
 
-	static function register(string command, Command callback)
-		registry.put(command.getHash(), callback)
+	static function register(string commandName, Command command) returns Command
+		registry.put(commandName.getHash(), command)
+		commands.push(commandName)
+		return command
 	
-	static function get(string command) returns Command
-		return registry.get(command.getHash())
-	
-public class Argument
-	boolean isExpr = false
-	string value = null
-	Expr expr = null
+	static function get(string commandName) returns Command
+		return registry.get(commandName.getHash())
 
-	construct(Expr expr)
-		this.isExpr = true
-		this.expr = expr
-	
-	construct(string value)
-		this.isExpr = false
-		this.value = value
-
-	ondestroy
-		if expr != null
-			destroy expr
-
-	function asReal(CommandContext context) returns real
-		real r
-		if isExpr
-			r = expr.eval(context.scriptContext())
-		else
-			r = value.toReal()
-		return r
-
-	function asInt(CommandContext context) returns int
-		int n
-		if isExpr
-			n = expr.eval(context.scriptContext()).toInt()
-		else
-			n = value.toInt()
-		return n
-
-	function asBool(CommandContext context) returns boolean
-		boolean b
-		if isExpr
-			b = expr.eval(context.scriptContext()) != 0
-		else
-			b = value.toBool()
-		return b
-	
-	function asString(CommandContext context) returns string
-		string s
-		if isExpr
-			s = expr.eval(context.scriptContext()).toString()
-		else
-			s = value
-		return s
-
-public class Arguments
-	private CommandContext context
-	private ArgumentParser parser
-	private constant args = new HashMap<int, Argument>
-	private var argCount = 0
-	private string rest = null
-
-	construct(ArgumentParser parser, CommandContext context)
-		this.parser = parser
-		this.context = context
-
-	ondestroy
-		destroy parser
-		for i = 0 to argCount - 1
-			destroy args.get(i)
-		destroy args
-
-	private function parseArgument() returns Argument
-		Argument argument = null
-		let argString = parser.nextToken()
-		if argString.charAt(0) == "!"
-			let expr = Niya.parse(argString)
-			if expr.error == null
-				argument = new Argument(expr.expr)
-			else
-				error(expr.error)
-		else
-			argument = new Argument(argString)
-
-		args.put(argCount, argument)
-		argCount++
-		return argument
-
-	function get(int index) returns Argument
-		while argCount <= index
-			this.parseArgument()
-		return args.get(index)
-
-	function getString(int index) returns string
-		return get(index).asString(context)
-
-	function getBool(int index) returns boolean
-		return get(index).asBool(context)
-
-	function getInt(int index) returns int
-		return get(index).asInt(context)
-
-	function getReal(int index) returns real
-		return get(index).asReal(context)
-
-	function getRest(boolean parsed) returns string
-		if rest == null
-			if parsed
-				rest = parser.restParsed()
-			else
-				rest = parser.restSimple()
-		return rest
+	static function getAll() returns LinkedList<string>
+		return commands
 
 /**
 	Holds data related to the execution of commands within a single context.
@@ -153,14 +96,22 @@ public class CommandContext
 		let commandParser = commandStack.peek()
 		if commandParser != null
 			if not commandParser.isFinished()
-				let command = commandParser.nextToken()
-				let argumentParser = new ArgumentParser(command)
-				let arguments = new Arguments(argumentParser, this)
-				let callback = CommandRegistry.get(arguments.getString(0))
+				var command = commandParser.nextToken()
+				let macroExpansion = MacroRegistry.getExpansion(executor.owner(), command)
+				if macroExpansion != null
+					command = macroExpansion
 
-				if callback != null
-					run(callback, arguments)
-				destroy arguments
+				let arguments = new Arguments(new ArgumentParser(command), scriptContext)
+				let aliasExpansion = AliasRegistry.getExpansion(executor.owner(), arguments.getString(0))
+				if aliasExpansion != null
+					let newCommand = aliasExpansion + " " + arguments.getRest(false)
+					destroy arguments
+					run(newCommand)
+				else
+					let callback = CommandRegistry.get(arguments.getString(0))
+					if callback != null
+						run(callback, arguments)
+					destroy arguments
 			else
 				commandStack.pop()
 				destroy commandParser
@@ -173,7 +124,7 @@ public class CommandContext
 
 	/** Directly executes the specified command **/
 	function run(Command command, Arguments arguments)
-		command.run(this, arguments)
+		command.getCallback().run(this, arguments)
 
 	/** Continues executing commands in this context and catches any errors **/
 	function continue()
@@ -181,7 +132,7 @@ public class CommandContext
 			next()
 		
 		if not success
-			Log.warn("Command [ID " + (this castTo int).toString() + "] by player " + owner().getNameColored() + " has crashed.")
+			Log.warn("CommandCallback [ID " + (this castTo int).toString() + "] by player " + owner().getNameColored() + " has crashed.")
 			Log.warn("Error: " + lastError)
 
 	function selection() returns LinkedList<unit>
@@ -197,7 +148,6 @@ public class CommandContext
 		isHalted = true
 		for parser in commandStack
 			destroy parser
-
 
 public class CommandExecutor
 	private var contextList = new LinkedList<CommandContext>
@@ -220,19 +170,91 @@ public class CommandExecutor
 	protected static function get(player who) returns CommandExecutor
 		return executors.get(who)
 
-	protected static function createExecutors()
-		forAllPlayers() (who) ->
-			let executor = new CommandExecutor(who)
-			executors.put(who, executor)
-
 	function owner() returns player
 		return owner
 
 	function execute(string command)
 		newContext().run(command)
 
+	@compiletime
+	protected static function createExecutors()
+		forAllPlayers() (who) ->
+			let executor = new CommandExecutor(who)
+			executors.put(who, executor)
+
 public function player.executor() returns CommandExecutor
 	return CommandExecutor.get(this)
 
 init
 	CommandExecutor.createExecutors()
+
+public enum CollisionCheck
+	NO_COLLISION
+	MACRO_COLLISION
+	ALIAS_COLLISION
+	COMMAND_COLLISION
+
+public tuple collisioncheckresult(CollisionCheck status, string message)
+
+public class CommandUtils
+	static function registerMacro(player who, string macro, string expansion) returns collisioncheckresult
+		let collisionCheck = checkResolutionCollisionForMacro(who, macro)
+
+		if collisionCheck.status == CollisionCheck.NO_COLLISION
+			MacroRegistry.registerMacro(who, macro, expansion, false)
+
+		return collisionCheck
+
+	static function registerDefaultMacro(string macro, string expansion)
+		MacroRegistry.registerDefaultMacro(macro, expansion)
+
+	static function registerAlias(player who, string aliaz, string expansion) returns collisioncheckresult
+		let collisionCheck = checkResolutionCollision(who, aliaz)
+
+		if collisionCheck.status == CollisionCheck.NO_COLLISION
+			AliasRegistry.registerAlias(who, aliaz, expansion, false)
+
+		return collisionCheck
+
+	static function registerDefaultAlias(string aliaz, string expansion)
+		AliasRegistry.registerDefaultAlias(aliaz, expansion)
+	
+	/**
+		Check if a given input string would collide with any
+		existing commands, aliases or macros.
+	**/
+	static function checkResolutionCollision(player who, string input) returns collisioncheckresult
+		for macro in MacroRegistry.getMacros(who)
+			if input.startsWith(macro.input)
+				return collisioncheckresult(CollisionCheck.MACRO_COLLISION, "collision with macro " + macro.toString())
+
+		for aliaz in AliasRegistry.getAliases(who)
+			if input == aliaz.input
+				return collisioncheckresult(CollisionCheck.ALIAS_COLLISION, "collision with alias " + aliaz.toString())
+
+		for command in CommandRegistry.getAll()
+			if input == command
+				return collisioncheckresult(CollisionCheck.COMMAND_COLLISION, "collision with command " + command)
+
+		return collisioncheckresult(CollisionCheck.NO_COLLISION, null)
+
+	/**
+		Check if a given string, if added as a macro,
+		would collide with any existing commands,
+		macros, or aliases.
+	**/
+	static function checkResolutionCollisionForMacro(player who, string input) returns collisioncheckresult
+		for macro in MacroRegistry.getMacros(who)
+			if macro.input.startsWith(input)
+				return collisioncheckresult(CollisionCheck.MACRO_COLLISION, "collision with macro " + macro.toString())
+		
+		for aliaz in AliasRegistry.getAliases(who)
+			if aliaz.input.startsWith(input)
+				return collisioncheckresult(CollisionCheck.ALIAS_COLLISION, "collision with alias " + aliaz.toString())
+
+		for command in CommandRegistry.getAll()
+			if command.startsWith(input)
+				return collisioncheckresult(CollisionCheck.COMMAND_COLLISION, "collision with command " + command)
+
+		return checkResolutionCollision(who, input)
+			

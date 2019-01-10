@@ -75,6 +75,7 @@ init
 	initOperators()
 
 public abstract class Expr
+	@noinline
 	abstract function eval(ScriptContext context) returns real
 	abstract function toString() returns string
 
@@ -86,6 +87,7 @@ class NullaryExpr extends Expr
 
 	ondestroy
 
+	@noinline
 	override function eval(ScriptContext context) returns real
 		return operator.run(context)
 
@@ -103,6 +105,7 @@ class UnaryExpr extends Expr
 	ondestroy
 		destroy arg
 
+	@noinline
 	override function eval(ScriptContext context) returns real
 		return operator.run(context, arg)
 
@@ -123,6 +126,7 @@ class BinaryExpr extends Expr
 		destroy arg1
 		destroy arg2
 
+	@noinline
 	override function eval(ScriptContext context) returns real
 		return operator.run(context, arg1, arg2)
 
@@ -146,6 +150,7 @@ class TertiaryExpr extends Expr
 		this.arg2 = arg2
 		this.arg3 = arg3
 
+	@noinline
 	override function eval(ScriptContext context) returns real
 		return operator.run(context, arg1, arg2, arg3)
 
@@ -177,6 +182,7 @@ class VarSetExpr extends Expr
 	ondestroy
 		destroy setExpr
 
+	@noinline
 	override function eval(ScriptContext context) returns real
 		let value = setExpr.eval(context)
 		context.setVar(varName, value)
@@ -195,6 +201,7 @@ class LiteralExpr extends Expr
 
 	ondestroy
 
+	@noinline
 	override function eval(ScriptContext context) returns real
 		return value
 
@@ -209,6 +216,7 @@ tuple createexpr(Expr expr, string error)
 tuple word(string s, int last)
 public tuple parsedexpr(Expr expr, string error)
 
+@noinline
 function skipWhitespace(string input, int start) returns int
 	var pos = start
 	let length = input.length()
@@ -220,6 +228,7 @@ function skipWhitespace(string input, int start) returns int
 
 	return pos
 
+@noinline
 function parseWord(string input, int start) returns word
 	var pos = start
 	var wordEnd = start
@@ -235,6 +244,7 @@ function parseWord(string input, int start) returns word
 
 	return word(input.substring(start, wordEnd), pos)
 
+@noinline
 function createExpr(string operator, LinkedList<Expr> exprlist) returns createexpr
 	var ret = createexpr(null, null)
 
@@ -278,6 +288,7 @@ function createExpr(string operator, LinkedList<Expr> exprlist) returns createex
 							ret.expr = new TertiaryExpr(operators.get(hash) castTo TertiaryOp, exprlist.get(0), exprlist.get(1), exprlist.get(2))
 	return ret
 
+@noinline
 function parseSubExpr(string input, int start) returns subexpr
 	var pos = skipWhitespace(input, start)
 	let length = input.length()
@@ -321,6 +332,7 @@ function parseSubExpr(string input, int start) returns subexpr
 		let literal = new LiteralExpr(word.s)
 		return subexpr(literal, word.last, null)
 
+@noinline
 function parseExpr(string input) returns parsedexpr
 	let expr = parseSubExpr(input, 0)
 	return parsedexpr(expr.expr, expr.error)

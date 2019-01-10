@@ -58,6 +58,9 @@ function registerColors()
     c("dg2", 22)
     c("brown2", 23)
 
+public function isValidColorString(string name) returns boolean
+    return colors.has(name.getHash())
+
 public function getColorFromString(string name) returns playercolor
     let hash = name.getHash()
     if colors.has(hash)

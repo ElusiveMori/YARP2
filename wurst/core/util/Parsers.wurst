@@ -49,7 +49,7 @@ public abstract class BaseParser
 
 	/** Returns the rest of the input as a simple, unparsed string. **/
 	function restSimple() returns string
-		let temp = pos
+		let temp = min(pos, input.length())
 		pos = input.length()
 
 		return input.substring(temp, pos)

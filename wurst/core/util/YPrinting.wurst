@@ -1,14 +1,15 @@
 package YPrinting
 
-constant DEBUG_PREFIX      = "|c0036a97dDebug >> |r"
-constant WARNING_PREFIX    = "|c00b65e2bWarning >> |r"
-constant MESSAGE_PREFIX    = "|c006d619e>> |r"
-constant HINT_PREFIX       = "|c0051e177Hint >> |r"
-constant OOC_PREFIX        = "|c00b65949OOC >> |r "
-constant DEBUG_HIGHLIGHT   = "|c008fc9e6"
-constant WARNING_HIGHLIGHT = "|c00eab257"
-constant GENERIC_HIGHLIGHT = "|c00a6bfe2"
-constant ASSERT_HIGHLIGHT  = "|c00a93c36"
+constant DEBUG_PREFIX      = "|cff36a97dDebug >> |r"
+constant WARNING_PREFIX    = "|cffb65e2bWarning >> |r"
+constant MESSAGE_PREFIX    = "|cff6d619e>> |r"
+constant HINT_PREFIX       = "|cff51e177Hint >> |r"
+constant DEBUG_HIGHLIGHT   = "|cff8fc9e6"
+constant WARNING_HIGHLIGHT = "|cffeab257"
+constant GENERIC_HIGHLIGHT = "|cffa6bfe2"
+constant ASSERT_HIGHLIGHT  = "|cffa93c36"
+
+constant CHAT_HIGHLIGHT  = "|cffffdb7a"
 
 constant MESSAGE_DURATION = 30.
 
@@ -16,33 +17,45 @@ function colorize(string colorstring, string message) returns string
     return colorstring + message + "|r"
 
 public class YPrint
+    static function showMessage(string message)
+        DisplayTimedTextToPlayer(localPlayer, 0., 0., MESSAGE_DURATION, message)
+
     static function highlight(string message) returns string
         return colorize(GENERIC_HIGHLIGHT, message)
 
     static function info(string message)
-        printTimed(MESSAGE_PREFIX + message, MESSAGE_DURATION)
+        showMessage(MESSAGE_PREFIX + message)
 
     static function warn(string message)
-        printTimed(WARNING_PREFIX + message, MESSAGE_DURATION)
+        showMessage(WARNING_PREFIX + message)
 
     static function debug(string message)
-        printTimed(DEBUG_PREFIX + message, MESSAGE_DURATION)
+        showMessage(DEBUG_PREFIX + message)
 
     static function hint(string message)
-        printTimed(HINT_PREFIX + message, MESSAGE_DURATION)
+        showMessage(HINT_PREFIX + message)
 
     static function info(player who, string message)
         if localPlayer == who
-            printTimed(MESSAGE_PREFIX + message, MESSAGE_DURATION)
+            showMessage(MESSAGE_PREFIX + message)
 
     static function warn(player who, string message)
         if localPlayer == who
-            printTimed(WARNING_PREFIX + message, MESSAGE_DURATION)
+            showMessage(WARNING_PREFIX + message)
 
     static function debug(player who, string message)
         if localPlayer == who
-            printTimed(DEBUG_PREFIX + message, MESSAGE_DURATION)
+            showMessage(DEBUG_PREFIX + message)
 
     static function hint(player who, string message)
         if localPlayer == who
-            printTimed(HINT_PREFIX + message, MESSAGE_DURATION)
+            showMessage(HINT_PREFIX + message)
+
+    static function ooc(string talker, string message)
+        showMessage(CHAT_HIGHLIGHT + "[|r" + talker + CHAT_HIGHLIGHT + "]|r: " + message)
+
+    static function pm(string talker, string message)
+        showMessage(highlight("(PM) ") + CHAT_HIGHLIGHT + "[|r" + talker + CHAT_HIGHLIGHT + "]|r: " + message)
+
+    static function ic(string talker, string message)
+        showMessage(talker + "|r " + message)

@@ -4,9 +4,12 @@ import ClosureForGroups
 import LinkedList
 
 public function player.selectedUnitsList() returns LinkedList<unit>
-    let list = new LinkedList<unit>
-    forUnitsSelected(this, (unit u) -> list.add(u))
-    return list
+    if compiletime
+        return new LinkedList<unit>
+    else
+        let list = new LinkedList<unit>
+        forUnitsSelected(this, (unit u) -> list.add(u))
+        return list
 
 public function player.deselectAll()
     let list = this.selectedUnitsList()
