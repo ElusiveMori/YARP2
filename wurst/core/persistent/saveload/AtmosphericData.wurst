@@ -1,0 +1,62 @@
+package AtmosphericData
+
+import YARPPrelude
+import initlater RegionSpecifier
+
+public class AtmosphericData implements DataSerializable
+    private string dnc = null
+    private terrainfog fog = terrainfog(false, 0, 0, 0, 0, 0)
+    private colorcorrect corrector = colorcorrect(false, 0, 0, 0)
+    private int weatherId = 0
+
+    override function serialize(DataWriter writer)
+        writer.writeBoolean(dnc != null)
+
+        if dnc != null
+            writer.writeString(dnc)
+
+        writer.writeBoolean(fog.state)
+        writer.writeReal(fog.r)
+        writer.writeReal(fog.g)
+        writer.writeReal(fog.b)
+        writer.writeReal(fog.min)
+        writer.writeReal(fog.max)
+
+        writer.writeBoolean(corrector.state)       
+        writer.writeInt(corrector.r)       
+        writer.writeInt(corrector.g)       
+        writer.writeInt(corrector.b)
+
+        writer.writeInt(weatherId)
+
+    override function deserialize(DataReader reader)
+        let dncEnabled = reader.readBoolean()
+
+        if dncEnabled
+            this.dnc = reader.readString()
+
+        this.fog.state = reader.readBoolean()
+        this.fog.r = reader.readReal()
+        this.fog.g = reader.readReal()
+        this.fog.b = reader.readReal()
+        this.fog.min = reader.readReal()
+        this.fog.max = reader.readReal()
+
+        this.corrector.state = reader.readBoolean()
+        this.corrector.r = reader.readInt()
+        this.corrector.g = reader.readInt()
+        this.corrector.b = reader.readInt()
+
+        this.weatherId = reader.readInt()
+
+    function scan(RegionSpecifier specifier)
+        this.dnc = specifier.getDNC()
+        this.fog = specifier.getFog()
+        this.corrector = specifier.getColorCorrect()
+        this.weatherId = specifier.getWeather()
+
+    function apply(RegionSpecifier specifier)
+        specifier.setDNC(dnc)
+        specifier.setFog(fog)
+        specifier.setColorCorrect(corrector)
+        specifier.setWeather(weatherId)

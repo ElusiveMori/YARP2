@@ -1,0 +1,29 @@
+package TerrainData
+
+import YARPPrelude
+import TileData
+import HeightData
+
+public class TerrainData implements DataSerializable
+    private let tiles = new TileData
+    private let height = new HeightData
+
+    ondestroy
+        destroy tiles
+        destroy height
+
+    override function serialize(DataWriter writer)
+        tiles.serialize(writer)
+        height.serialize(writer)
+
+    override function deserialize(DataReader reader)
+        tiles.deserialize(reader)
+        height.deserialize(reader)
+
+    function scan(rect area)
+        tiles.scan(area)
+        height.scan(area)
+
+    function apply(rect area)
+        tiles.apply(area)
+        height.apply(area)

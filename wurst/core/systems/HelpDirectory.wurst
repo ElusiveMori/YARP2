@@ -1,0 +1,32 @@
+package HelpDirectory
+
+import YARPPrelude
+
+class HelpEntry
+    string key
+    string content
+
+    LinkedList<HelpEntry> subEntries
+
+    construct(string key, string content)
+        this.key = key
+        this.content = content
+
+    function addSubTopic(string key, string content) returns HelpEntry
+        let entry = new HelpEntry(key, content)
+        subEntries.add(entry)
+        return entry
+
+public class HelpDirectory
+    static let generalHelpEntries = new LinkedList<HelpEntry>
+    static let commandHelpEntries = new LinkedList<HelpEntry>
+
+    static function addGeneralHelp(string key, string content) returns HelpEntry
+        let entry = new HelpEntry(key, content)
+        generalHelpEntries.add(entry)
+        return entry
+
+    static function addCommandHelp(string key, string content) returns HelpEntry
+        let entry = new HelpEntry(key, content)
+        commandHelpEntries.add(entry)
+        return entry

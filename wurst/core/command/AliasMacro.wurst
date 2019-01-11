@@ -1,0 +1,88 @@
+package AliasMacro
+
+import YARPPrelude
+
+public class ExpansionEntry
+    string input
+    string expansion
+    boolean isDefault
+
+    construct(string input, string expansion, boolean isDefault)
+        this.input = input
+        this.expansion = expansion
+        this.isDefault = isDefault
+
+    @inline
+    function toString() returns string
+        return "[" + input + "] => [" + expansion + "]"
+
+public class AliasRegistry
+    private static HashMap<int, ExpansionEntry> array registries
+    private static LinkedList<ExpansionEntry> array aliases
+
+    private static function initPlayer(player who)
+        if registries[who.getId()] == null
+            registries[who.getId()] = new HashMap<int, ExpansionEntry>
+            aliases[who.getId()] = new LinkedList<ExpansionEntry>
+
+    private static function getRegistry(player who) returns HashMap<int, ExpansionEntry>
+        initPlayer(who)
+        return registries[who.getId()]
+
+    static function getAliases(player who) returns LinkedList<ExpansionEntry>
+        initPlayer(who)
+        return aliases[who.getId()]
+
+    static function registerAlias(player who, string aliaz, string expansion, boolean isDefault)
+        let aliasEntry = new ExpansionEntry(aliaz, expansion, isDefault)
+        getRegistry(who).put(aliaz.getHash(), aliasEntry)
+        getAliases(who).push(aliasEntry)
+
+    static function registerDefaultAlias(string aliaz, string expansion)
+        for i = 0 to bj_MAX_PLAYERS - 1
+            registerAlias(players[i], aliaz, expansion, true)
+
+    static function getExpansion(player who, string aliaz) returns string
+        let aliasEntry = getRegistry(who).get(aliaz.getHash())
+        if aliasEntry != null
+            return aliasEntry.expansion
+        else
+            return null
+
+    static function removeAlias(player who, string aliaz)
+        let aliasEntry = getRegistry(who).get(aliaz.getHash())
+        if aliasEntry != null
+            getRegistry(who).remove(aliaz.getHash())
+            getAliases(who).remove(aliasEntry)
+
+public class MacroRegistry
+    private static LinkedList<ExpansionEntry> array macros
+    
+    private static function initPlayer(player who)
+        if macros[who.getId()] == null
+            macros[who.getId()] = new LinkedList<ExpansionEntry>
+
+    static function getMacros(player who) returns LinkedList<ExpansionEntry>
+        initPlayer(who)
+        return macros[who.getId()]
+
+    static function registerMacro(player who, string macro, string expansion, boolean isDefault)
+        let macroEntry = new ExpansionEntry(macro, expansion, isDefault)
+        getMacros(who).push(macroEntry)
+
+    static function registerDefaultMacro(string macro, string expansion)
+        for i = 0 to bj_MAX_PLAYERS - 1
+            registerMacro(players[i], macro, expansion, true)
+
+    static function getExpansion(player who, string input) returns string
+        for entry in getMacros(who)
+            if input.startsWith(entry.input)
+                return entry.expansion + " " + input.substring(entry.input.length())
+
+        return null
+
+    static function removeMacro(player who, string macro)
+        for entry in getMacros(who)
+            if macro == entry.input
+                getMacros(who).remove(entry)
+                break

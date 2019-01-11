@@ -1,0 +1,66 @@
+package CommandTests
+
+import Command
+
+var test1CommandCalled = false
+var test2CommandCalled = false
+string test1CommandArgument = null
+string test2CommandArgument = null
+
+function reset()
+    test1CommandCalled = false
+    test2CommandCalled = false
+    test1CommandArgument = null
+    test2CommandArgument = null
+
+@compiletime
+function registerTestCommands()
+    SimpleCommand.register("test1") (context, arguments) ->
+        test1CommandCalled = true
+        test1CommandArgument = arguments.getString(1)
+
+    SimpleCommand.register("test2") (context, arguments) ->
+        test2CommandCalled = true
+        test2CommandArgument = arguments.getString(1)
+
+@test function aliasTest()
+    reset()
+    AliasRegistry.registerDefaultAlias("lol", "test1")
+
+    players[0].executor().execute("lol hello")
+    test2CommandCalled.assertFalse()
+    test1CommandCalled.assertTrue()
+    test1CommandArgument.assertEquals("hello")
+    test2CommandArgument.assertEquals(null)
+
+    reset()
+    AliasRegistry.registerDefaultAlias("lol", "test2")
+
+    players[0].executor().execute("lol hi")
+    test2CommandCalled.assertTrue()
+    test1CommandCalled.assertFalse()
+    test1CommandArgument.assertEquals(null)
+    test2CommandArgument.assertEquals("hi")
+
+    reset()
+    AliasRegistry.registerDefaultAlias("lolol", "test1 asdf | test2 fdsa")
+    players[0].executor().execute("lolol")
+    test1CommandCalled.assertTrue()
+    test2CommandCalled.assertTrue()
+    test1CommandArgument.assertEquals("asdf")
+    test2CommandArgument.assertEquals("fdsa")
+
+@test function macroTest()
+    reset()
+
+    MacroRegistry.registerDefaultMacro("+", "test1")
+    MacroRegistry.registerDefaultMacro("=", "test2")
+
+    players[0].executor().execute("+pew")
+    players[0].executor().execute("=pow")
+
+    test1CommandCalled.assertTrue()
+    test2CommandCalled.assertTrue()
+
+    test1CommandArgument.assertEquals("pew")
+    test2CommandArgument.assertEquals("pow")

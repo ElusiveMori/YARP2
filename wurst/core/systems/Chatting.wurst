@@ -1,0 +1,31 @@
+package Chatting
+
+import YARPPrelude
+import PlayerSettings
+import UnitTag
+import YUnit
+
+public class Chat
+	static function sendPm(player sender, player target, string message)
+		if localPlayer == sender or localPlayer == target
+			YPrint.pm(sender.getNameRealColored(), message)
+
+	static function sendOoc(player sender, string message)
+		YPrint.ooc(sender.getNameRealColored(), message)
+	
+	static function sendIcUnit(yunit sender, string message)
+		sender.getTag().info.addSay(message)
+
+		let receivers = new HashSet<player>
+		forUnitsInRange(sender.u.getPos(), 2048) (what) ->
+			receivers.add(what.getOwner())
+
+		for receiver in receivers
+			if localPlayer == receiver
+				YPrint.ic(sender.u.getOwner().getRealColor().toColorString() + sender.getName(), message)
+
+		destroy receivers
+
+	static function sendIc(player sender, string icName, string message)
+		YPrint.ic(sender.getRealColor().toColorString() + icName, message)
+	

@@ -1,0 +1,342 @@
+package YUnit
+
+import YARPPrelude
+import Registry
+import UnitTag
+import initlater FormationMovement
+import Permissions
+import Config
+import EffectProxy
+import Attachment
+
+constant ABIL_UPROOT_ID = "Aro1"
+constant ABIL_UPROOT_BOOK_ID = compiletime(ABIL_ID_GEN.next())
+constant ABIL_UPROOT_BOOK_ORDER = compiletime(getNewOrder())
+
+constant UNIT_PROXY_ID = compiletime(UNIT_ID_GEN.next())
+
+function y(yunit what) returns YUnitData
+    return YUnitData.getBy(what.u)
+
+/**
+    Wrapper around the native unit type to provide some adjusted
+    getters and setters for units.
+**/
+public tuple yunit(unit u)
+
+public function yunit.getUid() returns string
+    return this.u.getUid()
+
+public function yunit.remove()
+    this.u.remove()
+
+public function yunit.kill()
+    this.u.kill()
+
+public function yunit.explode()
+    this.u.explode()
+
+public function yunit.setScale(real scale)
+    y(this).scale = scale
+    this.u.setScale(scale)
+
+public function yunit.getScale() returns real
+    return y(this).scale
+
+public function yunit.getFacing() returns angle
+    if getElapsedGameTime() - y(this).lastFacingSet > 0.2
+        return this.u.getFacingAngle()
+    else
+        return y(this).lastFacing
+
+public function yunit.setFacing(angle facing)
+    y(this).lastFacing = facing
+    y(this).lastFacingSet = getElapsedGameTime()
+    this.u.setFacing(facing)
+
+public function yunit.uproot()
+    if not y(this).isUprooted and this.u.isType(UNIT_TYPE_STRUCTURE) and this.u.getAbilityLevel(ABIL_UPROOT_BOOK_ID) == 0
+        let angle = this.u.getFacingAngle()
+        this.u.addAbility(ABIL_UPROOT_BOOK_ID)
+        this.u.issueImmediateOrder("unroot")
+        this.u.setFacing(angle)
+        this.u.setAnimation("stand")
+        y(this).isUprooted = true
+
+public function yunit.fly()
+    if not y(this).isFlown
+        this.uproot()
+        if this.u.addAbility(AbilityIds.crowForm)
+            this.u.removeAbility(AbilityIds.crowForm)
+        y(this).isFlown = true
+
+public function yunit.setHeight(real height)
+    this.fly()
+    if height < 0
+        this.initProxy()
+    if y(this).effectProxy != null
+        y(this).effectProxy.setHeight(height)
+    this.u.setFlyHeight(height, 10000000)
+    y(this).flyHeight = height
+    y(this).hasCustomFlyHeight = true
+
+public function yunit.getHeight() returns real
+    return y(this).flyHeight
+
+public function yunit.hasCustomFlyHeight() returns boolean
+    return y(this).hasCustomFlyHeight
+
+public function yunit.hasCustomName() returns boolean
+    return y(this).hasCustomName
+
+public function yunit.hasCustomHeroName() returns boolean
+    return y(this).hasCustomHeroName
+
+public function yunit.setName(string name)
+    y(this).hasCustomName = true
+    y(this).tag.info.setName(name)
+    this.u.setName(name)
+
+public function yunit.getName() returns string
+    return this.u.getName()
+
+public function yunit.setShortDesc(string desc)
+    y(this).tag.info.setShortDesc(desc)
+    y(this).shortDescription = desc
+
+public function yunit.getShortDesc() returns string
+    return y(this).shortDescription
+
+public function yunit.hasShortDesc() returns boolean
+    return y(this).shortDescription != null
+
+public function yunit.setHeroName(string name)
+    y(this).hasCustomHeroName = true
+    this.u.setProperName(name)
+
+public function yunit.getHeroName() returns string
+    return this.u.getProperName()
+
+public function yunit.setTint(colorA tint)
+    if y(this).effectProxy == null
+        this.u.setVertexColor(tint)
+    else
+        y(this).effectProxy.setTint(tint)
+    y(this).tint = tint
+    y(this).hasCustomTint = true
+
+public function yunit.getTint() returns colorA
+    return y(this).tint
+
+public function yunit.hasCustomTint() returns boolean
+    return y(this).hasCustomTint
+
+public function yunit.getTag() returns UnitTag
+    return y(this).tag
+
+public function yunit.setColor(playercolor pc)
+    y(this).pc = pc
+    this.u.setColor(pc)
+
+public function yunit.getColor() returns playercolor
+    return y(this).pc
+
+public function yunit.setLife(real life)
+    this.u.setLife(life)
+
+public function yunit.getLife() returns real
+    return this.u.getLife()
+
+public function yunit.setMaxLife(int life)
+    y(this).hasCustomMaxLife = true
+    this.u.setMaxHP(life)
+
+public function yunit.getMaxLife() returns real
+    return this.u.getMaxHP()
+
+public function yunit.hasCustomMaxLife() returns boolean
+    return y(this).hasCustomMaxLife
+
+public function yunit.setMana(real life)
+    this.u.setMana(life)
+
+public function yunit.getMana() returns real
+    return this.u.getMana()
+
+public function yunit.setMaxMana(int life)
+    y(this).hasCustomMaxMana = true
+    this.u.setMaxMana(life)
+
+public function yunit.getMaxMana() returns real
+    return this.u.getMaxMana()
+
+public function yunit.hasCustomMaxMana() returns boolean
+    return y(this).hasCustomMaxMana
+
+public function yunit.setDamage(int damage)
+    y(this).hasCustomDamage = true
+    this.u.setBaseDamage(damage, 1)
+
+public function yunit.getDamage() returns int
+    return this.u.getBaseDamage(1)
+
+public function yunit.hasCustomDamage() returns boolean
+    return y(this).hasCustomDamage
+
+public function yunit.setAttackCooldown(real cooldown)
+    y(this).hasCustomAttackCooldown = true
+    this.u.setAttackCooldown(cooldown, 1)
+
+public function yunit.getAttackCooldown() returns real
+    return this.u.getAttackCooldown(1)
+
+public function yunit.hasCustomAttackCooldown() returns boolean
+    return y(this).hasCustomAttackCooldown
+
+public function yunit.setSimpleFormation(SimpleFormationData simpleFormation)
+    y(this).simpleFormation = simpleFormation
+
+public function yunit.getSimpleFormation() returns SimpleFormationData
+    return y(this).simpleFormation
+
+public function yunit.initProxy()
+    if y(this).effectProxy == null
+        y(this).effectProxy = new DynamicEffectProxy(this.u, this.u.getModel())
+        y(this).effectProxy.copyParentProperties()
+        this.u.setVertexColor(colorA(0, 0, 0, 0))
+
+public function yunit.removeProxy()
+    if y(this).effectProxy != null
+        destroy y(this).effectProxy
+        y(this).effectProxy = null
+        this.u.setVertexColor(this.getTint())
+
+public function yunit.setPitch(angle pitch)
+    this.initProxy()
+    y(this).effectProxy.setPitch(pitch)
+
+public function yunit.setRoll(angle roll)
+    this.initProxy()
+    y(this).effectProxy.setRoll(roll)
+
+public function yunit.addAttachment(UnitAttachment attachment)
+    y(this).attachments.push(attachment)
+
+public function yunit.removeAttachment(UnitAttachment attachment)
+    y(this).attachments.remove(attachment)
+    destroy attachment
+
+public function yunit.getAttachments() returns LinkedList<UnitAttachment>
+    return y(this).attachments
+
+public function yunit.clone() returns yunit
+    let cloned = yunit(createUnit(this.u.getOwner(), this.u.getTypeId(), vec2(0, 0), angle(0)))
+    cloned.setScale(this.getScale())
+    cloned.setFacing(this.getFacing())
+    if this.hasCustomFlyHeight()
+        cloned.setHeight(this.getHeight())
+    if this.hasCustomName()
+        cloned.setName(this.getName())
+    if this.hasCustomHeroName()
+        cloned.setHeroName(this.getHeroName())
+    if this.hasShortDesc()
+        cloned.setShortDesc(this.getShortDesc())
+    if this.hasCustomTint()
+        cloned.setTint(this.getTint())
+    if this.hasCustomMaxLife()
+        cloned.setMaxLife(this.getMaxLife().toInt())
+    if this.hasCustomMaxMana()
+        cloned.setMaxLife(this.getMaxMana().toInt())
+    if this.hasCustomDamage()
+        cloned.setDamage(this.getDamage())
+    if this.hasCustomAttackCooldown()
+        cloned.setAttackCooldown(this.getAttackCooldown())
+    if this.hasCustomTint()
+        cloned.setTint(this.getTint())
+
+    if y(this).isFlown
+        cloned.fly()
+
+    if y(this).isUprooted
+        cloned.uproot()
+
+    for attachment in this.getAttachments()
+        cloned.addAttachment(new UnitAttachment(cloned.u, attachment.getAttachmentId(), attachment.getAttachmentPoint()))
+
+    // TODO: clone pitch/roll
+
+    return cloned
+
+class YUnitData
+    unit what
+    real scale = 1
+    real lastFacingSet = 0
+    angle lastFacing = angle(0)
+    real flyHeight = 0
+    colorA tint = COLOR_WHITE
+    UnitTag tag
+    playercolor pc
+    boolean hasCustomName = false
+    boolean hasCustomHeroName = false
+    boolean hasCustomMaxLife = false
+    boolean hasCustomMaxMana = false
+    boolean hasCustomDamage = false
+    boolean hasCustomAttackCooldown = false
+    boolean hasCustomFlyHeight = false
+    boolean hasCustomTint = false
+    SimpleFormationData simpleFormation = null
+    DynamicEffectProxy effectProxy = null
+    string shortDescription = null
+    LinkedList<UnitAttachment> attachments = new LinkedList<UnitAttachment>
+    boolean isUprooted
+    boolean isFlown
+
+    boolean isProxy = false
+
+    construct(unit what)
+        this.what = what
+
+        if not what.isSpecial()
+            tag = new UnitTag(what)
+            what.setScale(1)
+            what.setVertexColor(COLOR_WHITE)
+
+        if (what.isType(UNIT_TYPE_SUMMONED) and what.isType(UNIT_TYPE_MECHANICAL)) and not what.isType(UNIT_TYPE_ANCIENT)
+            what.removeAbility(AbilityIds.move)
+            UnitRemoveType(what, UNIT_TYPE_SUMMONED)
+
+    ondestroy
+        if not what.isSpecial()
+            destroy tag
+
+        if effectProxy != null
+            destroy effectProxy
+
+        destroy attachments
+
+    static function getBy(int index) returns thistype
+        return index castTo thistype
+
+    static function getBy(unit what) returns thistype
+        return getBy(what.getIndex())
+
+init
+    onUnitIndex() ->
+        let what = getIndexedUnit()
+        if DEBUG_MODE
+            let yunit = new YUnitData(what)
+            if (yunit castTo int) != what.getIndex()
+                Log.warn("Instances of YUnitData and UnitIndex are diverging! Expected " + what.getIndex().toString() + " as index but got " + (yunit castTo int).toString())
+        else
+            new YUnitData(what)
+
+    onUnitDeindex() ->
+        destroy getDeindexedUnit().getIndex() castTo YUnitData
+
+@compiletime function generateObjects()
+    new AbilityDefinitionSpellBook(ABIL_UPROOT_BOOK_ID)
+        ..setLevels(1)
+        ..setSpellList(1, ABIL_UPROOT_ID)
+        ..setMaximumSpells(1, 1)
+        ..setMinimumSpells(1, 1)
+        ..setBaseOrderID(1, ABIL_UPROOT_BOOK_ORDER)

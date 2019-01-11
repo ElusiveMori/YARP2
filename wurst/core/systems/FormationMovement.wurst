@@ -1,0 +1,135 @@
+package FormationMovement
+
+import YARPPrelude
+import YUnit
+
+enum FormationMode
+    NONE
+    RECTANGLE
+    CIRCLE
+
+FormationSettings array playerFormationModes
+var frameProcessedUnits = new HashSet<unit>
+
+public class FormationSettings
+    var mode = FormationMode.NONE
+    var rectWidth = 4
+    var rectVertSpacing = 64.
+    var rectHorizSpacing = 64.
+
+    function getPos(int totalUnits, int orderCount, vec2 origin, vec2 target) returns vec2
+        let direction = (target - origin).norm()
+        let perpendicular = direction.rotate(90 .asAngleDegrees())
+
+        var result = target
+        let firstRowCount = totalUnits mod rectWidth
+        var row = 0.
+
+        if firstRowCount == 0
+            row = (orderCount div rectWidth).toReal()
+        else if orderCount >= firstRowCount
+            row = ((orderCount - firstRowCount) div rectWidth + 1).toReal()
+
+        var column = 0.
+        if firstRowCount != 0 and row == 0 and firstRowCount != rectWidth
+            let spacing = (rectWidth - 1) / (firstRowCount)
+            column += spacing / 2 + spacing * orderCount
+        else
+            column = ((orderCount - firstRowCount) mod rectWidth).toReal()
+
+        result -= direction * row * rectVertSpacing
+        result += perpendicular * column * rectHorizSpacing - perpendicular * ((rectWidth - 1) / 2) * rectHorizSpacing       
+
+        return result
+
+public function player.getFormationSettings() returns FormationSettings
+    return playerFormationModes[this.getId()]
+
+public class SimpleFormationData
+    private LinkedList<unit> unitList
+    private HashMap<int, real> unitOrdersX = new HashMap<int, real>
+    private HashMap<int, real> unitOrdersY = new HashMap<int, real>
+    private var orderCount = 0
+    private var center = vec2(0, 0)
+    private player owner
+
+    construct(LinkedList<unit> unitList, player owner)
+        this.unitList = unitList
+        this.owner = owner
+
+        var centerPos = vec2(0, 0)
+
+        for what in unitList
+            yunit(what).setSimpleFormation(this)
+            centerPos += what.getPos()
+
+        this.center = vec2(centerPos.x / unitList.size(), centerPos.y / unitList.size())
+
+    ondestroy
+        for what in unitList
+            yunit(what).setSimpleFormation(null)
+
+        destroy unitList
+        destroy unitOrdersX
+        destroy unitOrdersY
+
+    private function onUnitOrder(unit what, vec2 pos)
+        let id = what.getIndex()
+
+        unitOrdersX.put(id, pos.x)
+        unitOrdersY.put(id, pos.y)
+
+        orderCount++
+
+        if orderCount == unitList.size()
+            nullTimer() ->
+                issueOrders()
+
+    private function issueOrders()
+        var target = vec2(0, 0)
+        let totalCount = unitList.size()
+        var count = 0
+
+        for what in unitList
+            let id = what.getIndex()
+            target.x += unitOrdersX.get(id)
+            target.y += unitOrdersY.get(id)
+            what.issueImmediateOrderById(Orders.stop)
+            what.setPathing(false)
+
+        target.x = target.x / totalCount
+        target.y = target.y / totalCount
+
+        let settings = playerFormationModes[owner.getId()]
+
+        for what in unitList
+            nullTimer() ->
+                what.issuePointOrderById(Orders.move, settings.getPos(totalCount, count, center, target))
+            count++
+
+        destroy this
+
+    protected static function onUnitOrder(player who, unit what, vec2 pos)
+        var simpleFormation = yunit(what).getSimpleFormation()
+
+        if simpleFormation == null
+            simpleFormation = new SimpleFormationData(who.selectedUnitsList(), who)
+
+        simpleFormation.onUnitOrder(what, pos)
+        
+init
+    for i = 0 to bj_MAX_PLAYERS - 1
+        playerFormationModes[i] = new FormationSettings()
+
+    EventListener.add(EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER) ->
+        let orderId = GetIssuedOrderId()
+        let what = GetTriggerUnit()
+
+        if not frameProcessedUnits.has(what)
+            frameProcessedUnits.add(what)
+            if (orderId == Orders.move or orderId == Orders.smart) and GetTriggerPlayer().getId() < bj_MAX_PLAYERS
+                SimpleFormationData.onUnitOrder(GetTriggerPlayer(), what, getOrderPos())
+
+
+    doPeriodically(ANIMATION_PERIOD * 3) (_) ->
+        frameProcessedUnits.clear()

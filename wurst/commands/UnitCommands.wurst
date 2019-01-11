@@ -1,0 +1,64 @@
+package UnitCommands
+
+import YARP
+
+init
+    let registrator = new CommandRegistrator()
+
+    // registrator.withFlag(U)
+
+    registrator.registerUnit("attach") (context, arguments, what) ->
+        let subcommand = arguments.getString(1)
+        let owner = context.owner()
+        
+        switch subcommand
+            case "add"
+                let attachmentId = arguments.getString(2)
+                let attachmentPoint = arguments.getString(3)
+
+                if UnitAttachment.isValidAttachmentId(attachmentId)
+                    let attachment = new UnitAttachment(what.u, attachmentId, attachmentPoint)
+
+                    what.addAttachment(attachment)
+                else
+                    YPrint.warn(owner, attachmentId + " is not a valid attachment.")
+            case "list"
+                let attachments = what.getAttachments()
+
+                YPrint.info(owner, "Attachments for unit " + YPrint.highlight(what.getName()))
+                var count = 0
+                for attachment in attachments
+                    count++
+                    YPrint.info(YPrint.highlight(count.toString()) + " - " + attachment.getAttachmentPoint() + " > " + attachment.getAttachmentId())
+            case "remove"
+                let index = arguments.getInt(2)
+                let attachments = what.getAttachments()
+
+                if index > attachments.size() or index < 1
+                    YPrint.warn(owner, "There's no attachment with this id.")
+                else
+                    let attachment = attachments.get(index - 1)
+                    what.removeAttachment(attachment)
+
+    registrator.registerUnit("stack") (context, arguments, what) ->
+        let count = arguments.getInt(1)
+
+        for i = 0 to count - 1
+            let clone = what.clone()
+            clone.u.setXY(what.u.getPos())
+
+    registrator.registerSimple("clone") (context, arguments) ->
+        let count = arguments.getInt(1)
+    
+        var centerPoint = vec2(0, 0)
+        for what in context.selection()
+            centerPoint += what.getPos()
+
+        centerPoint = centerPoint.op_div(context.selection().size().toReal())
+
+        for what in context.selection()
+            let offset = what.getPos() - centerPoint
+
+            for i = 0 to count - 1
+                let clone = yunit(what).clone()
+                clone.u.setXY(context.owner().getSpawner().getPos() + offset)

@@ -1,0 +1,195 @@
+package UnitTag
+
+import YARPPrelude
+import Permissions
+import PlayerSettings
+
+constant TEXT_SIZE = 8.
+constant VISIBILITY_UPDATE_PERIOD = 0.125
+constant UNIT_SPEECH_TIMEOUT = 15
+
+let cullRect = Rect(-2000, -2000, 2000, 2000)
+
+constant DESCRIPTION_COLOR = colorA(253, 204, 42, 255)
+constant WHITE_COLOR = colorA(255, 255, 255, 255)
+
+class UnitSpeech
+    private string text
+    private real timestamp = getElapsedGameTime()
+
+    construct(string text)
+        this.text = text
+
+    function get() returns string
+        return text
+
+    function check() returns boolean
+        return getElapsedGameTime() - timestamp < UNIT_SPEECH_TIMEOUT
+
+public class UnitInfo
+    private var name = ""
+    private var shortDesc = ""
+    private UnitSpeech speech = null
+
+    private var lastUpdate = 0.
+    private boolean dirty = false
+    private UnitTag parent
+
+    private string lastText = ""
+
+    construct(UnitTag parent)
+        this.parent = parent
+        dirty = true
+
+    ondestroy
+        destroy speech
+
+    function setName(string name)
+        if name != ""
+            this.name = name
+        else
+            this.name = ""
+        dirty = true
+
+    function setShortDesc(string shortDesc)
+        this.shortDesc = shortDesc
+        dirty = true
+
+    function addSay(string text)
+        if speech != null
+            destroy speech
+        speech = new UnitSpeech(text)
+        dirty = true
+
+    protected function calculateText() returns string
+        if not dirty and getElapsedGameTime() - lastUpdate < 1
+            return lastText
+
+        var str = ""
+
+        if name != ""
+            str += parent.what.getOwner().getRealColor().withAlpha(255).mix(COLOR_WHITE, 0.5).toColorString() + name + "|r\n"
+        
+        if shortDesc != ""
+            str += compiletime(DESCRIPTION_COLOR.toColorString()) + shortDesc + "|r\n"
+
+        if speech != null
+            if speech.check()
+                str += speech.get() + "\n"
+            else
+                destroy speech
+                speech = null
+
+        dirty = false
+        lastText = str
+        return str
+
+public class UnitTag
+    private static thistype array lookup
+    private static var currentlyVisible = new LinkedList<UnitTag>
+
+    protected unit what
+    private TextTagUpdater tag
+    private var shown = false
+    private var text = ""
+
+    var info = new UnitInfo(this)
+
+    construct(unit what)
+        this.what = what
+        lookup[what.getIndex()] = this
+
+    ondestroy
+        if tag != null
+            destroy tag
+
+        currentlyVisible.remove(this)
+        
+    private function show()
+        shown = true
+
+    private function hide()
+        shown = false
+        disable() 
+
+    private function enable()
+        if tag == null
+            tag = new TextTagUpdater(what)
+
+    private function disable()
+        if tag != null
+            destroy tag
+            tag = null
+
+    private function calculateOffset() returns vec3
+        return vec3(-64, 0, 128)
+
+    private static function getFromUnit(unit what) returns thistype
+        return lookup[what.getIndex()]
+
+    function update()
+        text = info.calculateText()
+        if text != ""
+            show()
+        else
+            hide()
+
+        if tag != null
+            tag.setText(text, TEXT_SIZE)
+            tag.setOffset(calculateOffset())
+
+    protected static function controlVisibility()
+        cullRect.moveTo(getCameraTargetPosition())
+
+        let iter = currentlyVisible.staticItr()
+
+        while iter.hasNext()
+            let tag = iter.next()
+            if not tag.what.getPos().isInRect(cullRect)
+                tag.disable()
+                iter.remove()
+
+        forUnitsInRect(cullRect) (unit what) ->
+            if not what.isSpecial()
+                let tag = getFromUnit(what)
+                if tag != null
+                    tag.update()
+                    if tag.tag == null and tag.shown
+                        tag.enable()
+                        currentlyVisible.push(tag)
+
+class TextTagUpdater
+    use LinkedListModule
+
+    private texttag tag = TextTagRecycler.getTextTag()
+    private unit parent
+    private vec3 offset
+
+    construct(unit parent)
+        this.parent = parent
+
+    ondestroy
+        if tag != null
+            TextTagRecycler.recycleTextTag(tag)
+
+    function setOffset(vec3 offset)
+        this.offset = offset
+
+    function setText(string text, real size)
+        if tag != null
+            tag.setText(text, size)
+
+    private function updatePosition()
+        if tag != null
+            tag.setPos(parent.getPos3Zero() + offset)
+
+    protected static function updatePositions()
+        for updater from TextTagUpdater.staticItr()
+            updater.updatePosition()
+
+init
+    doPeriodically(VISIBILITY_UPDATE_PERIOD) (periodic) ->
+        UnitTag.controlVisibility()
+
+    doPeriodically(ANIMATION_PERIOD) (periodic) ->
+        TextTagUpdater.updatePositions()

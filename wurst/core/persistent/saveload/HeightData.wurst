@@ -1,0 +1,49 @@
+package HeightData
+
+import YARPPrelude
+import HeightField
+
+public class HeightData implements DataSerializable
+    private HashReader reader = null
+    private int size = 0
+
+    ondestroy
+        if reader != null
+            destroy reader
+
+    function scan(rect area)
+        let writer = new HashWriter
+        let iter = new RectTileIterator(area)
+
+        executeWhile(1024, () -> iter.hasNext()) ->
+            let currentTile = iter.next()
+
+            size++
+            writer.writeInt(HeightField.getPointModifiedHeight(currentTile).toInt() + 0xFFFF div 2)
+
+        reader = writer.intoReader()
+
+    function apply(rect area)
+        let iter = new RectTileIterator(area)
+
+        executeWhile(1024, () -> iter.hasNext()) ->
+            let currentTile = iter.next()
+
+            size++
+            HeightField.setPointHeightTo(currentTile, (reader.readShort() - 0xFFFF div 2).toReal())
+        
+    override function serialize(DataWriter writer)
+        writer.writeInt(size)
+        
+        for i = 1 to size
+            writer.writeShort(reader.readInt())
+
+    override function deserialize(DataReader reader)
+        let writer = new HashWriter
+        let size = reader.readInt()
+
+        for i = 1 to size
+            writer.writeInt(reader.readShort())
+
+        this.size = size
+        this.reader = writer.intoReader()

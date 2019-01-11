@@ -1,0 +1,10 @@
+package Privileges
+
+enum PrivilegeType
+    CREATOR
+    DEVELOPER
+    TERRAINER
+    CONTRIBUTOR
+
+class PrivilegeEntry
+    PrivilegeType privilegeType

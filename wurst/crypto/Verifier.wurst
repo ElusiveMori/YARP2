@@ -1,0 +1,41 @@
+package Verifier
+
+function printHashesForString(string s)
+    var hash = ""
+
+    for i = 0 to 6
+        let a = i * 16
+        let b = (i + 2) * 16
+        hash += (s.substring(a, b) + s + s.substring(128 - b, 128 - a)).getHash().toHex(8)
+
+    print(hash)
+
+function getHashForString(string s) returns string
+    var hash = ""
+
+    for i = 0 to 6
+        let a = i * 16
+        let b = (i + 2) * 16
+        hash += (s.substring(a, b) + s + s.substring(128 - b, 128 - a)).getHash().toHex(8)
+
+    return hash
+
+function verifyFromHash(string input, string hash) returns bool
+    return getHashForString(input) == hash
+    
+
+@test function t()
+    
+
+
+    getHashForString("y+m%e-w35$gu6v+vi$rb@=j=_%-!6nk%o06gdipj6&#rlr%+8ng#o1jvl#8vem07@-=c*u=+fxfk@7+9d)q^123sw8c%nv)3fr_evl=06ghld&o^hc6q^w3hiyjeds*5").assertEquals("35CF907E6714D1D3A51F1356B1A140DCB9CF8A0B00D39CB2777A1DD3")
+    getHashForString("y+m%e-w35$gu6v+vi$rb@=j=_%-!6nk%o06gdipj6&#rlr%+8ng#o1jvl#8vem07@-=a*u=+fxfk@7+9d)q^123sw8c%nv)3fr_evl=06ghld&o^hc6q^w3hiyjeds*5")
+    getHashForString("y+m%e-w35$gu6v+vi$rb@=j=_%-!6nk%o06gdipj6&#rlr%+8ng#o1jvl#8vem07@-=d*u=+fxfk@7+9d)q^123sw8c%nv)3fr_evl=06ghld&o^hc6q^w3hiyjeds*5")
+    getHashForString("y+m%e-w35$gu6v+vi$rb@=j=_%-!6nk%o06gdipj6&#rlr%+8ng#o1jvl#8vem07@-=e*u=+fxfk@7+9d)q^123sw8c%nv)3fr_evl=06ghld&o^hc6q^w3hiyjeds*5")
+    getHashForString("y+m%e-w35$gu6v+vi$rb@=j=_%-!6nk%o06gdipj6&#rlr%+8ng#o1jvl#8vem07@-=c+u=+fxfk@7+9d)q^123sw8c%nv)3fr_evl=06ghld&o^hc6q^w3hiyjeds*5")
+    getHashForString("y+m%e-w35$gu6v+vi$rb@=j=_%-!6nk%o06gdipj6&#rlr%+8ng#o1jvl#8vem07@-=cqu=+fxfk@7+9d)q^123sw8c%nv)3fr_evl=06ghld&o^hc6q^w3hiyjeds*5")
+    getHashForString("y+m%e-w35$gu6v+vi$rb@=j=_%-!6nk%o06gdipj6&#rlr%+8ng#o1jvl#8vem07@-=c*u=-fxfk@7+9d)q^123sw8c%nv)3fr_evl=06ghld&o^hc6q^w3hiyjeds*5")
+    getHashForString("y+m%e-w35$gu6v+vi$rb@=j=_%-!6nk%o06gdipj6&#rlr%+8ng#o1jvl#8vem07@-=c*u=+fxsk@7+9d)q^123sw8c%nv)3fr_evl=06ghld&o^hc6q^w3hiyjeds*5")
+
+// 974E1790435D29E37C85357438E19F316B0A7AEFF36A1FA70C1F3E96
+// 974E1790435D29E37C853574F9A1A057B0A6A728F36A1FA70C1F3E96

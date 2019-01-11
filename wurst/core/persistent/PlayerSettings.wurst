@@ -1,0 +1,135 @@
+package PlayerSettings
+
+import YARPPrelude
+
+public class PlayerSettings extends Persistable
+    private static thistype array lookup
+
+    private int preferredPlayerColor
+
+    private boolean preferredNameColorEnabled
+    private color preferredNameColor
+    private string preferredName
+
+    construct(player owner)
+        super(owner, new XorEncryptor())
+        lookup[owner.getId()] = this
+
+    override function getPath() returns string
+        return "yarp2/settings.pld"
+
+    override function onLoaded(LoadStatus status)
+        if status != LoadStatus.SUCCESS
+            if localPlayer == owner
+                YPrint.info("Your settings have been re-initialized.")
+            save()
+            supplyDefault()
+        else
+            if localPlayer == owner
+                YPrint.info("Your settings have been loaded.")
+
+        applySettings()
+
+    override function onSaved()
+        if localPlayer == owner
+            YPrint.info("Your settings have been saved.")
+    
+    function supplyDefault()
+        preferredPlayerColor = 255
+        preferredNameColor = color(0, 0, 0)
+        preferredNameColorEnabled = false
+        preferredName = ""
+
+    override function serialize(DataWriter writer)
+        writer.writeByte(preferredPlayerColor)
+
+        writer.writeBoolean(preferredNameColorEnabled)
+
+        writer.writeByte(preferredNameColor.red)
+        writer.writeByte(preferredNameColor.green)
+        writer.writeByte(preferredNameColor.blue)
+
+        writer.writeString(preferredName)
+
+    override function deserialize(DataReader reader)
+        preferredPlayerColor = reader.readByte()
+
+        preferredNameColorEnabled = reader.readBoolean()
+
+        preferredNameColor.red = reader.readByte()
+        preferredNameColor.green = reader.readByte()
+        preferredNameColor.blue = reader.readByte()
+
+        preferredName = reader.readString()
+
+    function enablePreferredName(string name)
+        preferredName = name
+        applySettings()
+        save()
+
+    function disablePreferredName()
+        preferredName = ""
+        applySettings()
+        save()
+
+    function enablePreferredNameColor(color c)
+        preferredNameColor = c
+        preferredNameColorEnabled = true
+        applySettings()
+        save()
+
+    function disablePreferredNameColor()
+        preferredNameColorEnabled = false
+        applySettings()
+        save()
+
+    function enablePreferredColor(playercolor pc)
+        preferredPlayerColor = pc.toInt()
+        applySettings()
+        save()
+
+    function disablePreferredColor()
+        preferredPlayerColor = 255
+        applySettings()
+        save()
+
+    function getColor() returns color
+        color col
+
+        if preferredNameColorEnabled
+            col = preferredNameColor
+        else
+            col = owner.getColor().toColor()
+
+        return col
+
+    function applySettings()
+        if preferredPlayerColor != 255
+            owner.setColor(preferredPlayerColor.toPlayerColor())
+        else
+            owner.setColor(owner.getId().toPlayerColor())
+        
+        let name = preferredName == "" ? owner.getName() : preferredName
+
+        if preferredNameColorEnabled
+            owner.setName(preferredNameColor.toColorString() + name + "|r")
+        else
+            owner.setName(name)
+
+    static function get(player owner) returns thistype
+        return lookup[owner.getId()]
+
+public function player.getSettings() returns PlayerSettings
+    return PlayerSettings.get(this)
+
+public function player.getRealColor() returns color
+    return this.getSettings().getColor()
+
+public function player.getNameRealColored() returns string
+    return this.getRealColor().toColorString() + this.getName() + "|r"
+            
+init
+    doAfter(1) ->
+        for i = 0 to bj_MAX_PLAYERS - 1
+            let settings = new PlayerSettings(players[i])
+            settings.load()

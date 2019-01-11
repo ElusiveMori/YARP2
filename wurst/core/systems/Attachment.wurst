@@ -1,0 +1,45 @@
+package Attachment
+
+import YARPPrelude
+import Registry
+
+public class UnitAttachment
+    string attachmentId
+    string attachmentPoint
+    effect attachment
+
+    construct(unit parent, string attachmentId, string attachmentPoint)
+        this.attachmentId = attachmentId
+        this.attachmentPoint = attachmentPoint
+
+        this.attachment = parent.addEffect(resolveIdToModel(attachmentId), attachmentPoint)
+
+        print("created attachment " + resolveIdToModel(attachmentId) + " " + attachmentPoint)
+
+    ondestroy
+        this.attachment.destr()
+
+    function getAttachmentId() returns string
+        return attachmentId
+
+    function getAttachmentPoint() returns string
+        return attachmentPoint
+
+    private static function resolveIdToModel(string attachmentId) returns string
+        string model = null
+    
+        if attachmentId.endsWith(".mdx")
+            model = attachmentId
+        else if attachmentId.startsWith("_")
+            let id = attachmentId.substring(1).fromRawCode()
+            model = getModelForId(id)
+        else if doesUidExist(attachmentId)
+            model = getModelForId(getIdForUid(attachmentId))
+
+        if not model.endsWith(".mdx")
+            model += ".mdx"
+
+        return model
+
+    static function isValidAttachmentId(string attachmentId) returns boolean
+        return resolveIdToModel(attachmentId) != null

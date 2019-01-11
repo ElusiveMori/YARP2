@@ -1,0 +1,141 @@
+package Argument
+
+import YARPPrelude
+import initlater Command
+
+/**
+	Holds a single parsed argument.
+	An argument is either a literal, or a scripting expression.
+**/
+public class Argument
+	boolean isExpr = false
+	string value = null
+	Expr expr = null
+
+	construct(Expr expr)
+		this.isExpr = true
+		this.expr = expr
+	
+	construct(string value)
+		this.isExpr = false
+		this.value = value
+
+	ondestroy
+		if expr != null
+			destroy expr
+
+	@inline
+	function asReal(ScriptContext context) returns real
+		real r
+		if isExpr
+			r = expr.eval(context)
+		else
+			r = value.toReal()
+		return r
+
+	@inline
+	function asInt(ScriptContext context) returns int
+		int n
+		if isExpr
+			n = expr.eval(context).toInt()
+		else
+			n = value.toInt()
+		return n
+
+	@inline
+	function asBool(ScriptContext context) returns boolean
+		boolean b
+		if isExpr
+			b = expr.eval(context) != 0
+		else
+			b = value.toBool()
+		return b
+	
+	@inline
+	function asString(ScriptContext context) returns string
+		string s
+		if isExpr
+			s = expr.eval(context).toString()
+		else
+			s = value
+		return s
+
+/**
+	Holds arguments passed to a command.
+	get<Type>(n) methods return the n-th argument of the command as the given type.
+	If an argument is an expression, it is evaluated on each invocation of the getter method.
+	getRest() returns the remaining, unparsed arguments as a string.
+**/
+public class Arguments
+	private ScriptContext context
+	private ArgumentParser parser
+	private constant args = new HashMap<int, Argument>
+	private var argCount = 0
+	private string rest = null
+
+	construct(ArgumentParser parser, ScriptContext context)
+		this.parser = parser
+		this.context = context
+
+	ondestroy
+		destroy parser
+		for i = 0 to argCount - 1
+			destroy args.get(i)
+		destroy args
+		
+	private static function prepareArgument(string input) returns Argument
+		Argument argument = null
+
+		if input.charAt(0) == "!"
+			let expr = Niya.parse(input)
+			if expr.error == null
+				argument = new Argument(expr.expr)
+			else
+				error(expr.error)
+		else
+			argument = new Argument(input)
+
+		return argument
+
+	private function getNextArgument() returns Argument
+		let argString = parser.nextToken()
+		return insertArgument(prepareArgument(argString))
+
+	function insertArgument(Argument argument) returns Argument
+		args.put(argCount, argument)
+		argCount++
+		return argument
+
+	@inline
+	function get(int index) returns Argument
+		while argCount <= index
+			this.getNextArgument()
+		return args.get(index)
+
+	@noinline
+	function getString(int index) returns string
+		return get(index).asString(context)
+
+	@noinline
+	function getBool(int index) returns boolean
+		return get(index).asBool(context)
+
+	@noinline
+	function getInt(int index) returns int
+		return get(index).asInt(context)
+
+	@noinline
+	function getReal(int index) returns real
+		return get(index).asReal(context)
+
+	@noinline
+	function getRest(boolean parsed) returns string
+		if rest == null
+			if parsed
+				rest = parser.restParsed()
+			else
+				rest = parser.restSimple()
+		return rest
+
+	
+

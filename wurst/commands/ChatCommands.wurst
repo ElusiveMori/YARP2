@@ -1,0 +1,45 @@
+package ChatCommands
+
+import YARP
+
+init
+	let registrator = new CommandRegistrator()
+
+	registrator.withFlag(CommandExecutionFlag.DIRECT)
+
+	registrator.registerSimple("ooc") (context, arguments) ->
+		Chat.sendOoc(context.owner(), arguments.getRest(false))
+		
+	registrator.registerSimple("pm") (context, arguments) ->
+		let targetString = arguments.getString(1)
+		let sender = context.owner()
+		player target
+		if isValidColorString(targetString)
+			target = players[getColorFromString(targetString).toInt()]
+		else
+			target = findPlayerByString(targetString)
+
+		if target == null
+			YPrint.warn(sender, "Could not find this player.")
+		else
+			Chat.sendPm(sender, target, arguments.getRest(false))
+
+	registrator.withHelp("Usage: say X\nSpeak as unit.")
+	registrator.registerUnit("say") (context, arguments, what) ->
+		Chat.sendIcUnit(what, arguments.getRest(false))
+
+	registrator.registerSimple("ic") (context, arguments) ->
+		let name = arguments.getString(1)
+		let message = arguments.getRest(false)
+
+		Chat.sendIc(context.owner(), name, message)
+
+	registrator.registerSimple("setname") (context, arguments) ->
+		let macro = arguments.getString(1)
+		let name = arguments.getRest(false)
+		print(name)
+
+		context.run("macro [" + macro + "] ic [" + name + "]")
+
+	MacroRegistry.registerDefaultMacro(".", "ooc")
+	MacroRegistry.registerDefaultMacro(";", "say")
