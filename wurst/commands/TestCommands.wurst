@@ -92,12 +92,6 @@ init
             let nlparser = new LineSplitterParser(arguments.getString(2), arguments.getInt(1))
             print(nlparser.process())
 
-        SimpleCommand.register("centerfactor") (context, arguments) ->
-            centerFactor = arguments.getReal(1)
-        
-        SimpleCommand.register("offset") (context, arguments) ->
-            staticOffset = arguments.getReal(1)
-
         SimpleCommand.register("logtest") (context, arguments) ->
             var box = new Box(0)
             try() ->

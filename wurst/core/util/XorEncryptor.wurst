@@ -5,10 +5,8 @@ import BigString
 import PacketIO
 import Execute
 import Bitwise
-import StringUtils
 import Base64
 import Base64Data
-import StringEncoder
 
 constant KEY = [
 	31,

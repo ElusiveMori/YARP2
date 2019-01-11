@@ -3,7 +3,9 @@ package RegionCommands
 import initlater YARP
 
 init
-    SimpleCommand.register("region") (context, arguments) ->
+    let registrator = new CommandRegistrator()
+
+    registrator.registerSimple("region") (context, arguments) ->
         let command = arguments.getString(1)
         let owner = context.owner()
 

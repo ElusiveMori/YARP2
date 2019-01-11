@@ -29,3 +29,4 @@ import public ObjectDataUtil
 import public FormationMovement
 import public HeightField
 import public Chatting
+import public Attachment

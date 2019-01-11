@@ -67,3 +67,5 @@ init
     initSell()
     initVision()
     placeShops(0, 0)
+
+    SetTimeOfDay(12)

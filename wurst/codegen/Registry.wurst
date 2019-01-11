@@ -17,6 +17,10 @@ public function getUidForId(int id) returns string
         return id.toRawCode()
 
 @inline
+public function doesUidExist(string uid) returns boolean
+    return REGISTRIES.hasInt(KEY_UID, uid.getHash())
+
+@inline
 public function getIdForUid(string uid) returns int
     if REGISTRIES.hasInt(KEY_UID, uid.getHash())
         return REGISTRIES.loadInt(KEY_UID, uid.getHash())
