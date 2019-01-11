@@ -15,11 +15,13 @@ function reset()
 
 @compiletime
 function registerTestCommands()
-    SimpleCommand.register("test1") (context, arguments) ->
+    let registrator = new CommandRegistrator()
+
+    registrator.registerSimple("test1") (context, arguments) ->
         test1CommandCalled = true
         test1CommandArgument = arguments.getString(1)
 
-    SimpleCommand.register("test2") (context, arguments) ->
+    registrator.registerSimple("test2") (context, arguments) ->
         test2CommandCalled = true
         test2CommandArgument = arguments.getString(1)
 
