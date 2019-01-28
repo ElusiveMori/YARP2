@@ -4,9 +4,12 @@ import YARPPrelude
 import Registry
 
 public class UnitAttachment
-    string attachmentId
-    string attachmentPoint
-    effect attachment
+    private string attachmentId
+    private string attachmentPoint
+    private effect attachment
+
+    private colorA tint = colorA(255, 255, 255, 255)
+    private playercolor color = PLAYER_COLOR_COAL
 
     construct(unit parent, string attachmentId, string attachmentPoint)
         this.attachmentId = attachmentId
@@ -14,7 +17,7 @@ public class UnitAttachment
 
         this.attachment = parent.addEffect(resolveIdToModel(attachmentId), attachmentPoint)
 
-        print("created attachment " + resolveIdToModel(attachmentId) + " " + attachmentPoint)
+        setColor(PLAYER_COLOR_COAL)
 
     ondestroy
         this.attachment.destr()
@@ -24,6 +27,24 @@ public class UnitAttachment
 
     function getAttachmentPoint() returns string
         return attachmentPoint
+
+    function setTint(colorA tint)
+        this.attachment.setColor(tint)
+        this.attachment.setColor(tint)
+        this.tint = tint
+    
+    function getTint() returns colorA
+        return tint
+
+    function setColor(playercolor color)
+        this.color = color
+        let oldPlayerColor = players[0].getColor()
+        players[0].setColor(color)
+        this.attachment.setColorByPlayer(players[0])
+        players[0].setColor(oldPlayerColor)
+
+    function getColor() returns playercolor
+        return color
 
     private static function resolveIdToModel(string attachmentId) returns string
         string model = null

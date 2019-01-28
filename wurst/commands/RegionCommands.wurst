@@ -38,10 +38,10 @@ init
                         tile.setType(tileId)
                     destroy iter
             case "save"
-                let data = new RegionSaveData(owner, arguments.getString(2))
+                let data = new SaveData(owner, arguments.getString(2))
                 data.startSave(regionSpecifier.area(), regionSpecifier)
             case "load"
-                let data = new RegionSaveData(owner, arguments.getString(2))
+                let data = new SaveData(owner, arguments.getString(2))
                 data.startLoad() (_) ->
                     if not data.isValid()
                         destroy data

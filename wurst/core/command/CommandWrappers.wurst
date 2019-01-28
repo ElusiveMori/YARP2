@@ -5,14 +5,12 @@ import initlater Command
 import Permissions
 import YUnit
 
+let registrator = new CommandRegistrator()
+
 public class CommandRegistrator
-	private string helpText
 	private LinkedList<CommandPermission> permissions = new LinkedList<CommandPermission>
 	private bitset flags = bitset(0)
 	
-	function withHelp(string helpText)
-		this.helpText = helpText
-
 	function withPermissions(vararg string permissions)
 		for permission in permissions
 			this.permissions.push(new CommandPermission(permission))
@@ -21,26 +19,27 @@ public class CommandRegistrator
 		this.flags = this.flags.add(flag castTo int)
 
 	function register(string name, CommandCallback callback)
-		let command = new Command(name, helpText, permissions, flags, callback)
+		let command = new Command(name, permissions, flags, callback)
 		CommandRegistry.register(name, command)
 
 	function registerUnit(string name, UnitCommand callback)
-		let command = new Command(name, helpText, permissions, flags, callback)
+		let command = new Command(name, permissions, flags, callback)
 		CommandRegistry.register(name, command)
 			
 	function registerSimple(string name, SimpleCommand callback)
-		let command = new Command(name, helpText, permissions, flags, callback)
+		let command = new Command(name, permissions, flags, callback)
 		CommandRegistry.register(name, command)
 
 public abstract class SimpleCommand implements CommandCallback
+
 	override function run(CommandContext context, Arguments arguments)
 		callback(context, arguments)
 		context.continue()
 
 	abstract function callback(CommandContext context, Arguments arguments)
 
-	static function register(string command, SimpleCommand callback) returns Command
-		return null
+	static function register(string command, SimpleCommand callback)
+		registrator.registerSimple(command, callback)
 
 public abstract class UnitCommand implements CommandCallback
 	override function run(CommandContext context, Arguments arguments)
@@ -54,5 +53,5 @@ public abstract class UnitCommand implements CommandCallback
 
 	abstract function callback(CommandContext context, Arguments arguments, yunit what)
 
-	static function register(string command, UnitCommand callback) returns Command
-		return null
+	static function register(string command, UnitCommand callback)
+		registrator.registerUnit(command, callback)

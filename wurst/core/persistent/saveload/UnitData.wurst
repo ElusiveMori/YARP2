@@ -15,14 +15,19 @@ constant CUSTOM_ATTACK_COOLDOWN_FLAG = 5
 constant CUSTOM_FLY_HEIGHT_FLAG = 6
 constant CUSTOM_TINT_FLAG = 7
 constant SHORT_DESCRIPTION_FLAG = 8
+constant IS_UPROOTED_FLAG = 9
 
 class UnitAttachmentData
     string attachmentId
     string attachmentPoint
+    int color
+    colorA tint
 
-    construct(string attachmentId, string attachmentPoint)
+    construct(string attachmentId, string attachmentPoint, int color, colorA tint)
         this.attachmentId = attachmentId
         this.attachmentPoint = attachmentPoint
+        this.color = color
+        this.tint = tint
 
 class SingleUnitData implements DataSerializable
     private yunit what
@@ -65,8 +70,13 @@ class SingleUnitData implements DataSerializable
 
         writer.writeInt(what.getAttachments().size())
         for attachment in what.getAttachments()
-            writer.writeString(attachment.attachmentId)
-            writer.writeString(attachment.attachmentPoint)
+            writer.writeString(attachment.getAttachmentId())
+            writer.writeString(attachment.getAttachmentPoint())
+            writer.writeByte(attachment.getColor().toInt())
+            writer.writeByte(attachment.getTint().red)
+            writer.writeByte(attachment.getTint().green)
+            writer.writeByte(attachment.getTint().blue)
+            writer.writeByte(attachment.getTint().alpha)
 
     private function serializeOptionals(DataWriter writer)
         var flags = bitset(0)
@@ -96,6 +106,9 @@ class SingleUnitData implements DataSerializable
 
         if what.hasShortDesc()
             flags = flags.add(SHORT_DESCRIPTION_FLAG)
+
+        if what.isUprooted()
+            flags = flags.add(IS_UPROOTED_FLAG)
 
         writer.writeInt(flags.val)
 
@@ -143,7 +156,15 @@ class SingleUnitData implements DataSerializable
         attachments = new LinkedList<UnitAttachmentData>
         let attachmentsSize = reader.readInt()
         for i = 0 to attachmentsSize - 1
-            attachments.push(new UnitAttachmentData(reader.readString(), reader.readString()))
+            let attachmentId = reader.readString()
+            let attachmentPoint = reader.readString()
+            let color = reader.readByte()
+            let r = reader.readByte()
+            let g = reader.readByte()
+            let b = reader.readByte()
+            let a = reader.readByte()
+            let tint = colorA(r, g, b, a)
+            attachments.push(new UnitAttachmentData(attachmentId, attachmentPoint, color, tint))
 
     private function deserializeOptionals(DataReader reader)
         let flags = bitset(reader.readInt())
@@ -190,12 +211,13 @@ class SingleUnitData implements DataSerializable
         let id = getIdForUid(dictionary.getUidForId(this.dictionaryId))
         let what = yunit(createUnit(owner, id, vec2(0, 0), angle(0)))
 
-        what.u.setXY(area.getCenter() + pos)
         what.setColor(playerColorId.toPlayerColor())
         what.setScale(size)
 
         for attachmentData in attachments
             let attachment = new UnitAttachment(what.u, attachmentData.attachmentId, attachmentData.attachmentPoint)
+            attachment.setColor(attachmentData.color.toPlayerColor())
+            attachment.setTint(attachmentData.tint)
             what.addAttachment(attachment)
 
         if flags.contains(CUSTOM_NAME_FLAG)
@@ -224,6 +246,11 @@ class SingleUnitData implements DataSerializable
 
         if flags.contains(SHORT_DESCRIPTION_FLAG)
             what.setShortDesc(shortDescription)
+
+        if flags.contains(IS_UPROOTED_FLAG)
+            what.uproot()
+
+        what.u.setXY(area.getCenter() + pos)
 
     function scan(rect area, yunit what, UnitDictionary dictionary)
         this.what = what

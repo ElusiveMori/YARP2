@@ -63,6 +63,9 @@ public function yunit.uproot()
         this.u.setAnimation("stand")
         y(this).isUprooted = true
 
+public function yunit.isUprooted() returns boolean
+    return y(this).isUprooted
+
 public function yunit.fly()
     if not y(this).isFlown
         this.uproot()

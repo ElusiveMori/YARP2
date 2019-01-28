@@ -2,42 +2,77 @@ package DoodadData
 
 import YARPPrelude
 
-// public class SingleDoodadData implements DataSerializable
-//     private vec2 origin = vec2(0, 0)
-//     private vec2 pos = vec2(0, 0)
-//     private int id
-//     private destructable dood
+public class SingleDoodadData implements DataSerializable
+    private vec2 origin = vec2(0, 0)
+    private vec2 pos = vec2(0, 0)
+    private int id
+    private int variation = -1
+    private angle orientation = angle(0)
+    private real size = 1
+    private destructable dood
 
-//     override function serialize(DataWriter writer)
-//         writer.writeInt(dood.getTypeId())
-//         writer.writeReal(dood.getX() - origin.x)
-//         writer.writeReal(dood.getY() - origin.y) 
+    override function serialize(DataWriter writer)
+        writer.writeInt(dood.getTypeId())
+        writer.writeReal(dood.getX() - origin.x)
+        writer.writeReal(dood.getY() - origin.y)
+        if dood.hasData()
+            writer.writeBoolean(true)
+            writer.writeByte(dood.getVariation())
+            writer.writeShort(dood.getAngle().degrees().toInt())
+            writer.writeShort((dood.getSize() * 100).toInt().clamp(0, 10000))
+        else
+            writer.writeBoolean(false)
 
-//     override function deserialize(DataReader reader)
-//         id = reader.readInt()
-//         pos.x = reader.readReal()
-//         pos.y = reader.readReal()
+    override function deserialize(DataReader reader)
+        id = reader.readInt()
+        pos.x = reader.readReal()
+        pos.y = reader.readReal()
+        let hasData = reader.readBoolean()
+        if hasData
+            variation = reader.readByte()
+            orientation = reader.readShort().toReal().asAngleDegrees()
+            size = reader.readInt() / 100
 
-//     function apply(rect area)
-//         let origin = area.getCenter()
-//         var variation = 0
-//         let variationCount = StaticData.getDoodVariations(id)
+    function apply(rect area)
+        let origin = area.getCenter()
+        var variation = 0
+        let variationCount = StaticData.getDoodVariations(id)
 
-//         if variationCount != 0
-//             variation = GetRandomInt(0, variationCount - 1)
+        if variationCount != 0
+            variation = GetRandomInt(0, variationCount - 1)
 
-//         createDestructableEx(id, origin + pos, 0 .asAngleDegrees(), 1, variation)
+        createDestructableEx(id, origin + pos, orientation, size, variation)
 
-//     function scan(rect area, destructable dood)
-//         this.origin = area.getCenter()
-//         this.dood = dood
+    function scan(rect area, destructable dood)
+        this.origin = area.getCenter()
+        this.dood = dood
 
-// public class MultipleDoodadData implements DataSerializable
+public class MultipleDoodadData implements DataSerializable
+    private LinkedList<SingleDoodadData> doodads = new LinkedList<SingleDoodadData>
 
+    ondestroy
+        for doodad in doodads
+            destroy doodad
+        destroy doodads
 
-//     override function serialize(DataWriter writer)
-//     override function deserialize(DataReader reader)
+    override function serialize(DataWriter writer)
+        writer.writeShort(doodads.size())
+        for doodad in doodads
+            doodad.serialize(writer)
 
-//     function apply(rect area)
+    override function deserialize(DataReader reader)
+        let size = reader.readShort()
+        for i = 1 to size
+            let doodad = new SingleDoodadData()
+            doodad.deserialize(reader)
+            doodads.push(doodad)
 
-//     function scan(rect area)
+    function apply(rect area)
+        for doodad in doodads
+            doodad.apply(area)
+
+    function scan(rect area)
+        forDestructablesInRect(area) (dood) ->
+            let doodad = new SingleDoodadData()
+            doodad.scan(area, dood)
+            doodads.push(doodad)

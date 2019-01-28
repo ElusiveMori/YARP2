@@ -9,8 +9,6 @@ init
         let subCommand = arguments.getString(1)
         let settings = context.owner().getFormationSettings()
         switch subCommand
-            case "mode"
-                let arg = arguments.getString(2)
             case "width"
                 let arg = arguments.getInt(2)
                 settings.rectWidth = arg

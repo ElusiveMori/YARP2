@@ -29,7 +29,7 @@ public class RegionSpecifier
     private string dnc = null
     private weathereffect weatherEffect = null
     
-    private RegionSaveData saveData
+    private SaveData saveData
 
     construct(player owner, vec2 pos)
         what = createUnit(owner, REGION_SPECIFIER_ID, pos, angle(0))
@@ -100,7 +100,7 @@ public class RegionSpecifier
     function getWeather() returns int
         return this.weatherId
 
-    function initLoad(RegionSaveData data)
+    function initLoad(SaveData data)
         saveData = data
         what.addAbility(REGION_SPECIFIER_LOAD_ID)
 

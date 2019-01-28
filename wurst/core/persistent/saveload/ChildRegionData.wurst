@@ -1,8 +1,0 @@
-package ChildRegionData
-
-import YARPPrelude
-
-public class ChildRegionData implements DataSerializable
-    override function serialize(DataWriter writer)
-
-    override function deserialize(DataReader reader)

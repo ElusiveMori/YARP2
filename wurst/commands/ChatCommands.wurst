@@ -24,7 +24,6 @@ init
 		else
 			Chat.sendPm(sender, target, arguments.getRest(false))
 
-	registrator.withHelp("Usage: say X\nSpeak as unit.")
 	registrator.registerUnit("say") (context, arguments, what) ->
 		Chat.sendIcUnit(what, arguments.getRest(false))
 
@@ -37,7 +36,6 @@ init
 	registrator.registerSimple("setname") (context, arguments) ->
 		let macro = arguments.getString(1)
 		let name = arguments.getRest(false)
-		print(name)
 
 		context.run("macro [" + macro + "] ic [" + name + "]")
 

@@ -93,13 +93,16 @@ init
             what.setAttackCooldown(what.getAttackCooldown() + arguments.getReal(1))
 
         registrator.registerUnit("movex") (context, arguments, what) ->
-            what.u.setPos(what.u.getPos() + vec2(arguments.getReal(1), 0))
+            what.uproot()
+            what.u.setXY(what.u.getPos() + vec2(arguments.getReal(1), 0))
 
         registrator.registerUnit("movey") (context, arguments, what) ->
-            what.u.setPos(what.u.getPos() + vec2(0, arguments.getReal(1)))
+            what.uproot()
+            what.u.setXY(what.u.getPos() + vec2(0, arguments.getReal(1)))
 
         registrator.registerUnit("move") (context, arguments, what) ->
-            what.u.setPos(what.u.getPos() + vec2(arguments.getReal(1), arguments.getReal(2)))
+            what.uproot()
+            what.u.setXY(what.u.getPos() + vec2(arguments.getReal(1), arguments.getReal(2)))
 
         registrator.registerUnit("pitch") (context, arguments, what) ->
             what.setPitch(arguments.getReal(1).asAngleDegrees())

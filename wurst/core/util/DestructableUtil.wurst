@@ -19,14 +19,49 @@ class DestructableData
     static function get(destructable dood) returns thistype
         return lookup.loadInt(dood.getHandleId()) castTo thistype
 
+    static function remove(destructable dood)
+        lookup.removeInt(dood.getHandleId())
+
 public function createDestructableEx(int id, vec2 pos, angle orientation, real size, int variation) returns destructable
     let dood = createDestructable(id, pos, orientation, size, variation)
     new DestructableData(dood, orientation, size, variation)
     return dood
 
+function destructable.getData() returns DestructableData
+    return DestructableData.get(this)
+
+public function destructable.hasData() returns boolean
+    return this.getData() != null
+
 public function destructable.destroyEx()
-    let data = DestructableData.get(this)
+    let data = this.getData()
     if data != null
         destroy data
+        DestructableData.remove(this)
 
-public function destructable.getSize()
+public function destructable.getSize() returns real
+    let data = this.getData()
+    real size
+    if data != null
+        size = data.size
+    else
+        size = 1
+    return size
+
+public function destructable.getAngle() returns angle
+    let data = this.getData()
+    angle orientation
+    if data != null
+        orientation = data.orientation
+    else
+        orientation = angle(0)
+    return orientation
+
+public function destructable.getVariation() returns int
+    let data = this.getData()
+    int variation
+    if data != null
+        variation = data.variation
+    else
+        variation = 0
+    return variation

@@ -7,6 +7,7 @@ constant UNIT_DNC = new Table()
 constant WEATHER = new Table()
 constant VALID_TILES = new Table()
 constant DOOD_VARIATIONS = new Table()
+constant ATTACHMENT_POINTS = new Table()
 
 @noinline
 function terrainDnc()
@@ -236,11 +237,43 @@ function doodVariations()
     DOOD_VARIATIONS.saveInt('NTtw', 5) // northrend tree wall
     DOOD_VARIATIONS.saveInt('ZTtw', 5) // ruins tree wall
 
+@noinline
+function attachmentPoints()
+    ATTACHMENT_POINTS.saveBoolean(compiletime("overhead".getHash()), true)
+    ATTACHMENT_POINTS.saveBoolean(compiletime("head".getHash()), true)
+    ATTACHMENT_POINTS.saveBoolean(compiletime("chest".getHash()), true)
+    ATTACHMENT_POINTS.saveBoolean(compiletime("origin".getHash()), true)
+
+    ATTACHMENT_POINTS.saveBoolean(compiletime("weapon".getHash()), true)
+    ATTACHMENT_POINTS.saveBoolean(compiletime("hand".getHash()), true)
+    ATTACHMENT_POINTS.saveBoolean(compiletime("foot".getHash()), true)
+
+    ATTACHMENT_POINTS.saveBoolean(compiletime("right hand".getHash()), true)
+    ATTACHMENT_POINTS.saveBoolean(compiletime("left hand".getHash()), true)
+    ATTACHMENT_POINTS.saveBoolean(compiletime("right foot".getHash()), true)
+    ATTACHMENT_POINTS.saveBoolean(compiletime("left foot".getHash()), true)
+
+    ATTACHMENT_POINTS.saveBoolean(compiletime("front right foot".getHash()), true)
+    ATTACHMENT_POINTS.saveBoolean(compiletime("front left foot".getHash()), true)
+    ATTACHMENT_POINTS.saveBoolean(compiletime("back right foot".getHash()), true)
+    ATTACHMENT_POINTS.saveBoolean(compiletime("back left foot".getHash()), true)
+
+    ATTACHMENT_POINTS.saveString(compiletime("lhand".getHash()), "left hand")
+    ATTACHMENT_POINTS.saveString(compiletime("rhand".getHash()), "right hand")
+    ATTACHMENT_POINTS.saveString(compiletime("lfoot".getHash()), "left foot")
+    ATTACHMENT_POINTS.saveString(compiletime("rfoot".getHash()), "right foot")
+
+    ATTACHMENT_POINTS.saveString(compiletime("blfoot".getHash()), "back left foot")
+    ATTACHMENT_POINTS.saveString(compiletime("brfoot".getHash()), "back right foot")
+    ATTACHMENT_POINTS.saveString(compiletime("flfoot".getHash()), "front left foot")
+    ATTACHMENT_POINTS.saveString(compiletime("frfoot".getHash()), "front right foot")
+
 init
     terrainDnc()
     unitDnc()
     doodVariations()
     weatherCodes()
+    attachmentPoints()
 
 public class StaticData
     @inline
@@ -277,3 +310,20 @@ public class StaticData
         if UNIT_DNC.hasString(lighting.getHash())
             result = UNIT_DNC.loadString(lighting.getHash())
         return result
+
+    @inline
+    static function isValidAttachmentPoint(string attachmentPoint) returns boolean
+        let hash = attachmentPoint.getHash()
+
+        return ATTACHMENT_POINTS.hasBoolean(hash) or ATTACHMENT_POINTS.hasString(hash)
+
+    @inline
+    static function getAttachmentPoint(string attachmentPoint) returns string
+        let hash = attachmentPoint.getHash()
+
+        if ATTACHMENT_POINTS.hasBoolean(hash)
+            return attachmentPoint
+        else if ATTACHMENT_POINTS.hasString(hash)
+            return ATTACHMENT_POINTS.loadString(hash)
+        else
+            return null

@@ -2,6 +2,65 @@ package UnitCommands
 
 import YARP
 
+function addAttachment(player owner, Arguments arguments, yunit what)
+    let attachmentId = arguments.getString(2)
+    let attachmentPoint = arguments.getRest(true)
+
+    if UnitAttachment.isValidAttachmentId(attachmentId)
+        if StaticData.isValidAttachmentPoint(attachmentPoint)
+            let attachmentPointNew = StaticData.getAttachmentPoint(attachmentPoint)
+            let attachment = new UnitAttachment(what.u, attachmentId, attachmentPointNew)
+
+            what.addAttachment(attachment)
+        else
+            YPrint.warn(owner, attachmentPoint + " is not a valid attachment point.")
+    else
+        YPrint.warn(owner, attachmentId + " is not a valid attachment id.")
+
+function listAttachments(player owner, yunit what)
+    let attachments = what.getAttachments()
+
+    YPrint.info(owner, "Attachments for unit " + YPrint.highlight(what.getName()))
+    var count = 0
+    for attachment in attachments
+        count++
+        YPrint.info(YPrint.highlight(count.toString()) + " - " + attachment.getAttachmentPoint() + " > " + attachment.getAttachmentId())
+
+function removeAttachment(player owner, Arguments arguments, yunit what)
+    let index = arguments.getInt(2)
+    let attachments = what.getAttachments()
+
+    if index > attachments.size() or index < 1
+        YPrint.warn(owner, "There's no attachment with this id.")
+    else
+        let attachment = attachments.get(index - 1)
+        what.removeAttachment(attachment)
+
+function dispatchAttachmentCommand(player owner, Arguments arguments, yunit what)
+    let index = arguments.getInt(1)
+
+    if index > 0
+        let attachments = what.getAttachments()
+        if index > attachments.size()
+            YPrint.warn(owner, "This is not a valid attachment index.")
+        else
+            let attachment = attachments.get(index - 1)
+            let subcommand = arguments.getString(2)
+
+            switch subcommand
+                case "tint"
+                    let r = (arguments.getInt(3) / 100 * 255).toInt()
+                    let g = (arguments.getInt(4) / 100 * 255).toInt()
+                    let b = (arguments.getInt(5) / 100 * 255).toInt()
+                    let a = ((100 - arguments.getInt(6)) / 100 * 255).toInt()
+
+                    attachment.setTint(colorA(r, g, b, a))
+                case "color"
+                    let color = getColorFromString(arguments.getString(3))
+                    attachment.setColor(color)
+    else
+        YPrint.warn(owner, "This is not a command or a valid attachment index!")
+
 init
     let registrator = new CommandRegistrator()
 
@@ -13,32 +72,13 @@ init
         
         switch subcommand
             case "add"
-                let attachmentId = arguments.getString(2)
-                let attachmentPoint = arguments.getString(3)
-
-                if UnitAttachment.isValidAttachmentId(attachmentId)
-                    let attachment = new UnitAttachment(what.u, attachmentId, attachmentPoint)
-
-                    what.addAttachment(attachment)
-                else
-                    YPrint.warn(owner, attachmentId + " is not a valid attachment.")
+                addAttachment(owner, arguments, what)
             case "list"
-                let attachments = what.getAttachments()
-
-                YPrint.info(owner, "Attachments for unit " + YPrint.highlight(what.getName()))
-                var count = 0
-                for attachment in attachments
-                    count++
-                    YPrint.info(YPrint.highlight(count.toString()) + " - " + attachment.getAttachmentPoint() + " > " + attachment.getAttachmentId())
+                listAttachments(owner, what)
             case "remove"
-                let index = arguments.getInt(2)
-                let attachments = what.getAttachments()
-
-                if index > attachments.size() or index < 1
-                    YPrint.warn(owner, "There's no attachment with this id.")
-                else
-                    let attachment = attachments.get(index - 1)
-                    what.removeAttachment(attachment)
+                removeAttachment(owner, arguments, what)
+            default
+                dispatchAttachmentCommand(owner, arguments, what)
 
     registrator.registerUnit("stack") (context, arguments, what) ->
         let count = arguments.getInt(1)

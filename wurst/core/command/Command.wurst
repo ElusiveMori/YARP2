@@ -36,14 +36,12 @@ public class CommandPermission
 
 public class Command
 	private string command
-	private string helpText
 	private CommandCallback callback
 	private LinkedList<CommandPermission> permissions
 	private bitset flags
 
-	construct(string command, string helpText, LinkedList<CommandPermission> permissions, bitset flags, CommandCallback callback)
+	construct(string command, LinkedList<CommandPermission> permissions, bitset flags, CommandCallback callback)
 		this.command = command
-		this.helpText = helpText
 		this.permissions = permissions
 		this.flags = flags
 		this.callback = callback
